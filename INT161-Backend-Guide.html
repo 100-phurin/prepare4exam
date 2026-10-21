@@ -1,0 +1,1385 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>INT161 Backend Guide</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: เอกสาร API — แถบสารบัญซ้าย (บนมือถือเป็นแถบเลื่อนบน) + เนื้อหาเป็น "endpoint" ทีละสัปดาห์ */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --sunk:#e9edf3; --ink:#141a24; --muted:#586273; --line:#d9dee6;
+  --accent:#2347d0; --accent-soft:#e3e9fd;
+  --get:#11795a; --post:#a8620b; --put:#2154c4; --del:#bd3227;
+  --get-bg:#e1f3ec; --post-bg:#fbefdc; --put-bg:#e2eafb; --del-bg:#fbe5e2;
+  --ok:#11795a; --bad:#bd3227;
+  --code-bg:#161c28; --code-fg:#e2e7f0; --code-mute:#8a94a8; --code-kw:#8fb2ff; --code-str:#9fdfb6; --code-num:#ffc58a; --code-fn:#f0a8e0; --code-line:#262e3e;
+  --f-display:"Bai Jamjuree","IBM Plex Sans Thai",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans Thai",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0e1117; --surface:#161a22; --sunk:#1c212b; --ink:#e5e8ee; --muted:#9aa3b2; --line:#2a303c;
+  --accent:#8299ff; --accent-soft:#1e2647;
+  --get:#46c194; --post:#e6a650; --put:#7aa0ff; --del:#ff7366;
+  --get-bg:#13291f; --post-bg:#2d2111; --put-bg:#16213d; --del-bg:#331816;
+  --ok:#46c194; --bad:#ff7366;
+  --code-bg:#0a0d13; --code-line:#1d2330;
+  color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0e1117; --surface:#161a22; --sunk:#1c212b; --ink:#e5e8ee; --muted:#9aa3b2; --line:#2a303c;
+  --accent:#8299ff; --accent-soft:#1e2647;
+  --get:#46c194; --post:#e6a650; --put:#7aa0ff; --del:#ff7366;
+  --get-bg:#13291f; --post-bg:#2d2111; --put-bg:#16213d; --del-bg:#331816;
+  --ok:#46c194; --bad:#ff7366;
+  --code-bg:#0a0d13; --code-line:#1d2330;
+  color-scheme:dark }
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.75}
+a{color:var(--accent)}
+code,kbd{font-family:var(--f-mono);font-size:.86em}
+:not(pre)>code{background:var(--sunk);border:1px solid var(--line);padding:.05em .38em;border-radius:5px;white-space:nowrap}
+h1,h2,h3,h4{font-family:var(--f-display);line-height:1.3;text-wrap:balance;margin:0}
+p{margin:0}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+.shell{display:grid;grid-template-columns:260px minmax(0,1fr);max-width:1240px;margin:0 auto;gap:40px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+/* ---------- sidebar ---------- */
+.side{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;height:100vh;overflow:auto;padding-block:28px;display:flex;flex-direction:column;gap:18px}
+.brand{display:flex;flex-direction:column;gap:2px}
+.brand .crs{font-family:var(--f-mono);font-size:12px;color:var(--muted);letter-spacing:.06em}
+.brand strong{font-family:var(--f-display);font-size:20px}
+.toc{display:flex;flex-direction:column;gap:2px;list-style:none;margin:0;padding:0}
+.toc a{display:grid;grid-template-columns:34px 1fr 16px;align-items:center;gap:6px;padding:7px 8px;border-radius:8px;text-decoration:none;color:var(--ink);font-size:14px;line-height:1.35}
+.toc a:hover{background:var(--sunk)}
+.toc a.active{background:var(--accent-soft);color:var(--accent)}
+.toc .wk{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.toc a.active .wk{color:var(--accent)}
+.toc .dot{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--line)}
+.toc a.done .dot{background:var(--ok);border-color:var(--ok)}
+.toc .sep{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:12px 8px 4px}
+.prog{font-size:13px;color:var(--muted)}
+.prog .bar{height:5px;background:var(--sunk);border-radius:3px;overflow:hidden;margin-top:6px}
+.prog .bar i{display:block;height:100%;background:var(--ok);width:0;transition:width .3s}
+
+/* ---------- main ---------- */
+main{min-width:0;padding-block:28px 80px;display:flex;flex-direction:column;gap:64px}
+.hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:28px;align-items:center;padding-top:8px}
+.hero h1{font-size:clamp(30px,4.2vw,44px);font-weight:700;letter-spacing:-.01em}
+.hero .lead{color:var(--muted);margin-top:12px;max-width:52ch}
+.hero .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.chip{font-size:13px;padding:4px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line)}
+.wire{background:var(--code-bg);color:var(--code-fg);border-radius:12px;padding:18px 18px 16px;font-family:var(--f-mono);font-size:13px;line-height:1.7;overflow-x:auto}
+.wire .c{color:var(--code-mute)} .wire .m{color:var(--code-num);font-weight:600} .wire .s{color:var(--code-str)} .wire .k{color:var(--code-kw)}
+.wire hr{border:0;border-top:1px dashed var(--code-line);margin:10px 0}
+
+.exam{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.exam h3{font-size:15px;color:var(--muted);font-weight:600;font-family:var(--f-body)}
+.exam .big{font-family:var(--f-display);font-size:22px;font-weight:700;margin-top:2px}
+.exam p{font-size:14px;color:var(--muted);margin-top:4px}
+
+section.wk{display:flex;flex-direction:column;gap:22px}
+.sec-head{display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--line);padding-bottom:16px}
+.sec-head .eyebrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-family:var(--f-mono);font-size:12px;color:var(--muted);letter-spacing:.04em}
+.sec-head h2{font-size:clamp(24px,3vw,30px);font-weight:700}
+.sec-head .sum{color:var(--muted);max-width:68ch}
+.mark{margin-left:auto;display:flex;align-items:center;gap:6px;font-family:var(--f-body);font-size:13px;cursor:pointer;user-select:none;padding:3px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface)}
+.mark input{accent-color:var(--ok);margin:0}
+
+h3.t{font-size:19px;font-weight:600;margin-top:6px}
+.prose{display:flex;flex-direction:column;gap:12px;max-width:72ch}
+.prose ul,.prose ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:6px}
+.muted{color:var(--muted)}
+
+.method{display:inline-block;font-family:var(--f-mono);font-size:11px;font-weight:600;letter-spacing:.04em;padding:2px 7px;border-radius:5px;min-width:52px;text-align:center}
+.GET{color:var(--get);background:var(--get-bg)} .POST{color:var(--post);background:var(--post-bg)} .PUT{color:var(--put);background:var(--put-bg)} .DELETE{color:var(--del);background:var(--del-bg)}
+
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card h4{font-size:16px;font-weight:600}
+.card p,.card li{font-size:14.5px}
+.card ul{margin:0;padding-left:1.2em}
+
+.key{border-left:3px solid var(--accent);background:var(--accent-soft);padding:12px 16px;border-radius:0 10px 10px 0;font-size:15px;max-width:72ch}
+.key b{color:var(--accent)}
+.warn{border-left:3px solid var(--post);background:var(--post-bg);padding:12px 16px;border-radius:0 10px 10px 0;font-size:15px;max-width:72ch}
+.warn b{color:var(--post)}
+
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12.5px;letter-spacing:.04em;color:var(--muted);font-weight:600;background:var(--sunk)}
+tr:last-child td{border-bottom:0}
+td code{white-space:nowrap}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- code blocks ---------- */
+.code{position:relative;background:var(--code-bg);border-radius:12px;min-width:0}
+.code .bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px 8px 16px;border-bottom:1px solid var(--code-line);font-family:var(--f-mono);font-size:12px;color:var(--code-mute)}
+.code .bar>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.copy{flex:none;background:transparent;border:1px solid var(--code-line);color:var(--code-fg);border-radius:6px;padding:2px 10px;font-size:12px;cursor:pointer;font-family:var(--f-body)}
+.copy:hover{border-color:var(--code-mute)}
+pre{margin:0;overflow-x:auto;padding:14px 16px;font-family:var(--f-mono);font-size:13px;line-height:1.65;color:var(--code-fg)}
+pre code{font-size:inherit;background:none;border:0;padding:0;white-space:pre}
+.hljs-keyword,.hljs-built_in,.hljs-literal{color:var(--code-kw)}
+.hljs-string,.hljs-template-string{color:var(--code-str)}
+.hljs-number{color:var(--code-num)}
+.hljs-title,.hljs-title.function_{color:var(--code-fn)}
+.hljs-comment{color:var(--code-mute);font-style:italic}
+.hljs-attr,.hljs-property{color:#b7c6e6}
+.hljs-subst{color:var(--code-fg)}
+
+/* ---------- interactive widgets ---------- */
+.tool{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.tool-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.tool-h h4{font-size:16px;font-weight:600}
+.tool-h span{font-size:12px;color:var(--muted);font-family:var(--f-mono);letter-spacing:.05em}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);min-width:0}
+input[type=text],input[type=number]{font:inherit;font-family:var(--f-mono);font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 10px;width:100%}
+.btn{border:1px solid var(--line);background:var(--surface);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:14px}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+:root[data-theme="dark"] .btn.pri{color:#0e1117}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .btn.pri{color:#0e1117} }
+.out{font-family:var(--f-mono);font-size:13px;background:var(--sunk);border-radius:10px;padding:12px 14px;overflow-x:auto;white-space:pre;line-height:1.6}
+.pill{display:inline-block;font-family:var(--f-mono);font-size:12px;padding:1px 8px;border-radius:999px}
+.pill.ok{background:var(--get-bg);color:var(--ok)} .pill.bad{background:var(--del-bg);color:var(--bad)}
+
+/* flow */
+.flow{display:grid;grid-template-columns:minmax(0,230px) minmax(0,1fr);gap:16px}
+.lanes{display:flex;flex-direction:column;gap:6px;list-style:none;margin:0;padding:0}
+.lanes li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);font-size:14px;background:var(--bg);transition:background .2s,border-color .2s}
+.lanes li small{font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-left:auto}
+.lanes li.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.lanes li.err.on{border-color:var(--bad);background:var(--del-bg);color:var(--bad)}
+.lanes li.dim{opacity:.4}
+.stage{display:flex;flex-direction:column;gap:10px;min-width:0}
+.stage .step-t{font-family:var(--f-display);font-weight:600;font-size:17px}
+.stage .step-n{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+
+/* status trainer */
+.codes{display:flex;flex-wrap:wrap;gap:8px}
+.codes button{font-family:var(--f-mono);font-size:14px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);cursor:pointer}
+.codes button.right{background:var(--get-bg);border-color:var(--ok);color:var(--ok)}
+.codes button.wrong{background:var(--del-bg);border-color:var(--bad);color:var(--bad)}
+.scen{font-size:16px;font-weight:500}
+
+/* quiz */
+.q{display:flex;flex-direction:column;gap:10px}
+.q .qn{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.q .qt{font-size:17px;font-weight:500}
+.opts{display:flex;flex-direction:column;gap:6px}
+.opts button{text-align:left;padding:9px 12px;border-radius:9px;border:1px solid var(--line);background:var(--bg);cursor:pointer;font-size:15px;display:grid;grid-template-columns:24px 1fr;gap:6px}
+.opts button b{font-family:var(--f-mono);color:var(--muted);font-weight:600}
+.opts button:disabled{cursor:default}
+.opts button.right{background:var(--get-bg);border-color:var(--ok)}
+.opts button.wrong{background:var(--del-bg);border-color:var(--bad)}
+.expl{font-size:14.5px;padding:10px 14px;border-radius:10px;background:var(--sunk)}
+.qfoot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.score{font-family:var(--f-mono);font-size:14px}
+
+/* tabs */
+.tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.tabs button{border:0;background:none;padding:8px 12px;font-family:var(--f-mono);font-size:12.5px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--accent)}
+
+.checklist{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+.checklist li{display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:15px}
+.checklist input{accent-color:var(--ok);margin-top:6px}
+
+.tree{font-family:var(--f-mono);font-size:13px;line-height:1.7;background:var(--sunk);border-radius:10px;padding:12px 16px;overflow-x:auto;white-space:pre}
+
+/* mobile */
+.topnav{display:none}
+@media (max-width:900px){
+  .shell{grid-template-columns:minmax(0,1fr);gap:0}
+  .side{display:none}
+  body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+  .topnav{display:flex;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line);overflow-x:auto;gap:4px;padding-block:8px;
+    padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));scrollbar-width:none}
+  .topnav a{flex:none;font-size:13px;text-decoration:none;color:var(--ink);padding:5px 10px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
+  .topnav a.active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+  .hero{grid-template-columns:minmax(0,1fr)}
+  .flow{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:640px){
+  .grid2,.grid3,.exam{grid-template-columns:minmax(0,1fr)}
+  main{gap:52px}
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav" id="topnav" aria-label="สารบัญ"></nav>
+<div class="shell">
+<aside class="side" aria-label="สารบัญ">
+  <div class="brand"><span class="crs">INT161 · SIT KMUTT</span><strong>Basic Backend</strong></div>
+  <div class="prog"><span id="progTxt">อ่านแล้ว 0/9</span><div class="bar"><i id="progBar"></i></div></div>
+  <ul class="toc" id="toc"></ul>
+</aside>
+
+<main>
+<!-- ================= HERO ================= -->
+<header class="hero" id="top">
+  <div>
+    <h1>สรุป INT161 Basic Backend Development</h1>
+    <p class="lead">ตั้งแต่ HTTP ไปจนถึง REST API แบบแบ่งเลเยอร์ด้วย Express + MySQL พร้อม Error Handling, Pagination และ DTO เรียบเรียงจากสไลด์และคาบเรียนกลุ่ม B (วันพฤหัส) มีตัวทดลองให้กดเล่นและแบบฝึกหัดท้ายบท</p>
+    <div class="chips"><span class="chip">Node.js</span><span class="chip">HTTP</span><span class="chip">REST</span><span class="chip">Express</span><span class="chip">mysql2</span><span class="chip">Error Handling</span><span class="chip">Pagination</span><span class="chip">DTO</span></div>
+  </div>
+  <div class="wire" aria-label="ตัวอย่าง HTTP request และ response"><span class="c"># HTTP Request</span>
+<br><span class="m">GET</span> <span class="k">/api/products?page=2&amp;limit=20</span> HTTP/1.1
+<br>Host: localhost:3000
+<br>Accept: application/json
+<hr><span class="c"># HTTP Response</span>
+<br>HTTP/1.1 <span class="m">200 OK</span>
+<br>Content-Type: application/json
+<br><br>{ <span class="s">"success"</span>: true, <span class="s">"data"</span>: [ … ],
+<br>&nbsp;&nbsp;<span class="s">"pagination"</span>: { <span class="s">"page"</span>: 2, <span class="s">"totalPages"</span>: 7 } }</div>
+</header>
+
+<div class="exam" aria-label="ข้อมูลการสอบ">
+  <div><h3>สอบครั้งที่ 2</h3><div class="big">19–26 ต.ค. 2569</div><p>ทฤษฎี 30% + ปฏิบัติ 20% · สอบรวม 3 ชั่วโมง</p></div>
+  <div><h3>ทฤษฎี · 1 ชั่วโมง</h3><div class="big">ปรนัย 5 ตัวเลือก</div><p>ตอบถูกข้อเดียว ฝนกระดาษคำตอบ (เตรียมดินสอ 2B) ออกทุกเรื่องที่เรียนมา</p></div>
+  <div><h3>ปฏิบัติ · 2 ชั่วโมง</h3><div class="big">เขียน API ตาม spec</div><p>ใช้ template ของแต่ละคน ตรวจด้วย test runner · ปิดเน็ตหลัง 15 นาทีแรก ดู <a href="#exam">เช็กลิสต์</a></p></div>
+</div>
+
+<!-- ================= OVERVIEW ================= -->
+<section class="wk" id="map" data-title="ภาพรวมเส้นทาง Request" data-wk="00">
+  <div class="sec-head">
+    <div class="eyebrow">ภาพรวมทั้งวิชา</div>
+    <h2>Request หนึ่งครั้ง วิ่งผ่านอะไรบ้าง</h2>
+    <p class="sum">ทุกบทในวิชานี้คือชิ้นส่วนหนึ่งของเส้นทางนี้ ลองกด "ถัดไป" ดูทีละขั้นว่า request ผ่านเลเยอร์ไหน แต่ละเลเยอร์ทำอะไร และถ้าเกิด error จะไปทางไหน</p>
+  </div>
+  <div class="tool">
+    <div class="tool-h"><h4>จำลองการเดินทางของ request</h4><span>INTERACTIVE</span></div>
+    <div class="row">
+      <button class="btn pri" id="flowNext">ถัดไป →</button>
+      <button class="btn" id="flowPrev">← ก่อนหน้า</button>
+      <button class="btn" id="flowMode">สลับเป็นเส้นทาง error</button>
+    </div>
+    <div class="flow">
+      <ul class="lanes" id="lanes"></ul>
+      <div class="stage" id="stage"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= WEEK 1 ================= -->
+<section class="wk" id="w1" data-title="Introduction" data-wk="01">
+  <div class="sec-head">
+    <div class="eyebrow">สัปดาห์ 1 · 6 ส.ค. <label class="mark"><input type="checkbox" data-done="w1"> อ่านแล้ว</label></div>
+    <h2>Web Application, JSON และ Node.js</h2>
+    <p class="sum">รู้ว่า backend อยู่ตรงไหนของเว็บ คุยกับ client ด้วยอะไร และทำไมใช้ Node.js</p>
+  </div>
+
+  <h3 class="t">สถาปัตยกรรมเว็บ 2 แบบ</h3>
+  <div class="grid2">
+    <div class="card"><h4>MPA (Multi-Page Application)</h4><p>เว็บแบบดั้งเดิม ทุกครั้งที่เปลี่ยนหน้า เบราว์เซอร์โหลดหน้าใหม่จาก server ทั้งหน้า (full page refresh) server ใช้ <b>template engine</b> สร้าง HTML ส่งกลับมา</p><p class="muted">Router → Controller → Model → View (Template) → HTML</p></div>
+    <div class="card"><h4>SPA (Single Page Application)</h4><p>โหลด HTML+CSS+JS ครั้งแรกครั้งเดียว หลังจากนั้นหน้าเว็บ (หรือแอปมือถือ) ขอข้อมูลจาก <b>RESTful API</b> ด้วย AJAX / fetch แล้วได้ <b>JSON</b> กลับมา วิชานี้เราเขียนฝั่งนี้</p><p class="muted">Front-end ⇄ {JSON} ⇄ Back-end (REST API) ⇄ DB</p></div>
+  </div>
+
+  <h3 class="t">JSON (JavaScript Object Notation)</h3>
+  <div class="prose">
+    <ul>
+      <li>รูปแบบแลกเปลี่ยนข้อมูลที่เบา คนอ่านง่าย เครื่อง parse ง่าย</li>
+      <li>มาจาก syntax ของ JavaScript (ECMA-262 3rd Edition) แต่<b>ไม่ผูกกับภาษาใด</b> ใช้ได้ทุกภาษา</li>
+      <li>ใน Node: <code>JSON.stringify(obj)</code> แปลง object → ข้อความ, <code>JSON.parse(text)</code> แปลงข้อความ → object</li>
+    </ul>
+  </div>
+
+  <h3 class="t">Web Services: SOAP กับ REST</h3>
+  <div class="tbl"><table>
+    <tr><th></th><th>SOAP</th><th>RESTful</th></tr>
+    <tr><td>คืออะไร</td><td>Simple Object Access Protocol เป็น<b>โปรโตคอล</b></td><td>เป็น<b>แนวทางการออกแบบ (design approach)</b> ไม่ใช่โปรโตคอล</td></tr>
+    <tr><td>รูปแบบข้อมูล</td><td>XML มาตรฐาน อธิบายด้วย WSDL</td><td>ใช้ได้หลายแบบ (text, XML) นิยม JSON ที่สุด</td></tr>
+    <tr><td>ผู้คิด</td><td>—</td><td>Roy Fielding (คนเดียวกับที่ร่วมออกแบบ HTTP)</td></tr>
+  </table></div>
+
+  <h3 class="t">ตัวแปลภาษา 3 แบบ</h3>
+  <div class="grid3">
+    <div class="card"><h4>Compiler</h4><p>แปลทั้งโปรแกรมเป็น machine code ล่วงหน้า</p><ul><li>รันเร็วที่สุด</li><li>ไฟล์ผูกกับ OS/CPU (portable น้อย)</li><li>ไม่ต้องแจก source code</li></ul><p class="muted">C, C++, Go</p></div>
+    <div class="card"><h4>Interpreter</h4><p>อ่านและแปลทีละบรรทัดตอนรัน</p><ul><li>พัฒนา/debug เร็ว ไม่ต้องรอ compile</li><li>ช้ากว่า (แปลไปรันไป)</li><li>portable สูง แต่ต้องแจก source</li></ul><p class="muted">JavaScript, Python</p></div>
+    <div class="card"><h4>Hybrid</h4><p>compile เป็น <b>byte code</b> ก่อน แล้วให้ VM (interpreter + JIT) แปลเป็น machine code ตอนรัน</p><p class="muted">Java, Kotlin, C# (.NET)</p></div>
+  </div>
+
+  <h3 class="t">Node.js คืออะไร</h3>
+  <div class="key"><b>Node.js ไม่ใช่ภาษา</b> แต่เป็น <b>runtime</b> ที่ทำให้รัน JavaScript ฝั่ง server ได้ เป็น open source ฟรี รันได้หลาย OS ข้อดีคือใช้ภาษาเดียว (JS) ทั้ง front-end และ back-end และทำงานแบบ asynchronous บน single thread (async/await)</div>
+  <div class="code"><div class="bar"><span>my-third-app.js · HTTP server แบบดิบ</span><button class="copy">คัดลอก</button></div><pre><code class="language-javascript">const http = require('node:http');
+
+const listener = function (request, response) {
+  if (request.url === '/user') {
+    response.writeHead(200, { 'Content-Type': 'application/json' });
+    response.end(JSON.stringify({ name: 'John Doe' }));
+  } else if (request.url === '/') {
+    response.writeHead(200);
+    response.end('Hello World');
+  } else {
+    response.writeHead(404);
+    response.end('Error: Page Not Found');
+  }
+};
+
+const server = http.createServer(listener);
+server.listen(3000);
+console.log('Server running at http://127.0.0.1:3000/');</code></pre></div>
+  <p class="muted">สามส่วนหลักของ Node web app: (1) import module ด้วย require/import (2) สร้าง server ที่ listen รอ client (3) อ่าน request แล้วส่ง response กลับ</p>
+</section>
+
+<!-- ================= WEEK 2 ================= -->
+<section class="wk" id="w2" data-title="HTTP Basics" data-wk="02">
+  <div class="sec-head">
+    <div class="eyebrow">สัปดาห์ 2 · 13 ส.ค. <label class="mark"><input type="checkbox" data-done="w2"> อ่านแล้ว</label></div>
+    <h2>HTTP Programming Basics</h2>
+    <p class="sum">โครงสร้าง request/response, โมดูล http ของ Node, CJS กับ ESM และการอ่านค่าจาก URL</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card"><h4>HTTP Request เก็บข้อมูลได้ 3 ที่</h4><ul><li><b>Method</b> บอกว่าจะทำอะไร (GET, POST, …)</li><li><b>Headers</b> ข้อมูลประกอบ เช่น <code>Content-Type</code>, <code>Host</code></li><li><b>Body</b> ข้อมูลหลัก เช่น JSON ตอน POST/PUT</li></ul><p class="muted">ส่วน URL เองก็มี path และ query string ด้วย</p></div>
+    <div class="card"><h4>HTTP Response มี 3 ส่วน</h4><ul><li><b>Status line</b> บรรทัดแรก เช่น <code>HTTP/1.1 200 OK</code></li><li><b>Headers</b></li><li><b>Message body</b> (payload)</li></ul></div>
+  </div>
+
+  <h3 class="t">Node.js ทำงานยังไง (Event Loop)</h3>
+  <div class="prose"><ol>
+    <li>client ส่ง request เข้ามา (อาจเป็นงาน blocking หรือ non-blocking เช่น query/update/delete)</li>
+    <li>Node รับ request ไปต่อคิวใน <b>Event Queue</b></li>
+    <li><b>Event Loop</b> หยิบทีละอัน ถ้าเป็นงานง่ายที่ไม่ต้องรอทรัพยากรภายนอก (non-blocking) ก็ทำแล้วตอบกลับเลย</li>
+  </ol></div>
+
+  <h3 class="t">Core modules ที่ควรรู้จัก</h3>
+  <div class="tbl"><table>
+    <tr><th>โมดูล</th><th>ใช้ทำอะไร</th><th>โมดูล</th><th>ใช้ทำอะไร</th></tr>
+    <tr><td><code>http</code></td><td>สร้าง HTTP server/client</td><td><code>fs</code></td><td>อ่าน/เขียนไฟล์</td></tr>
+    <tr><td><code>path</code></td><td>จัดการ path ไฟล์</td><td><code>os</code></td><td>ข้อมูลระบบปฏิบัติการ</td></tr>
+    <tr><td><code>events</code></td><td>จัดการ event</td><td><code>stream</code></td><td>จัดการข้อมูลแบบ stream</td></tr>
+    <tr><td><code>crypto</code></td><td>เข้ารหัส/แฮช</td><td><code>url</code>, <code>querystring</code></td><td>แยกส่วน URL และ query string</td></tr>
+  </table></div>
+
+  <h3 class="t">CommonJS กับ ES Modules</h3>
+  <div class="tbl"><table>
+    <tr><th>หัวข้อ</th><th>CommonJS (CJS)</th><th>ES Modules (ESM) ✓ แนะนำ</th></tr>
+    <tr><td>Syntax</td><td><code>require()</code> / <code>module.exports</code></td><td><code>import</code> / <code>export</code></td></tr>
+    <tr><td>การโหลด</td><td>synchronous ตอน runtime</td><td>parse แบบ static รองรับ async</td></tr>
+    <tr><td>ใช้ที่ไหน</td><td>Node.js (ระบบเก่า)</td><td>ทั้งเบราว์เซอร์และ Node.js</td></tr>
+    <tr><td>Tree-shaking</td><td>ทำได้ไม่ดี</td><td>bundler ตัดโค้ดที่ไม่ใช้ออกได้</td></tr>
+    <tr><td>ตำแหน่งไฟล์</td><td><code>__dirname</code>, <code>__filename</code></td><td><code>import.meta.url</code></td></tr>
+  </table></div>
+  <div class="warn"><b>อย่าลืม</b> จะใช้ <code>import</code> ใน Node ต้องใส่ <code>"type": "module"</code> ใน package.json (หรือใช้ไฟล์ .mjs)</div>
+
+  <h3 class="t">4 คลาสหลักของ node:http</h3>
+  <div class="grid2">
+    <div class="card"><h4><code>http.Server</code></h4><p><code>server.listen(port, cb)</code> เริ่มรอ connection · <code>server.close()</code> · event <code>'request'</code> เกิดทุกครั้งที่มี request</p></div>
+    <div class="card"><h4><code>http.ServerResponse</code> (res)</h4><p><code>writeHead(status, headers)</code> · <code>setHeader(name, value)</code> · <code>write(chunk)</code> · <code>end(data)</code> บอกว่าส่งครบแล้ว</p></div>
+    <div class="card"><h4><code>http.IncomingMessage</code> (req)</h4><p><code>req.method</code> · <code>req.url</code> · <code>req.headers</code> เป็น ReadableStream (body ต้องอ่านเป็น chunk)</p></div>
+    <div class="card"><h4><code>http.ClientRequest</code></h4><p>เกิดตอนเรียก <code>http.request()</code> ใช้ยิง request ไปหา server อื่น · event <code>'response'</code></p></div>
+  </div>
+
+  <h3 class="t">อ่านค่าจาก URL</h3>
+  <div class="code"><div class="bar"><span>http-server.js</span><button class="copy">คัดลอก</button></div><pre><code class="language-javascript">import * as http from 'node:http';
+
+const listener = (request, response) =&gt; {
+  const urlObj = new URL(request.url, `http://${request.headers.host}`);
+
+  // query string: ?name=Somchai&amp;fav_subj=A&amp;fav_subj=B
+  const name = urlObj.searchParams.get('name');          // 'Somchai'
+  const subjects = urlObj.searchParams.getAll('fav_subj'); // ['A', 'B']
+
+  // path variable: /users/123
+  const segments = urlObj.pathname.split('/').filter(Boolean); // ['users', '123']
+
+  response.writeHead(200, { 'Content-Type': 'text/plain' });
+  response.end(`You made a ${request.method} request to ${request.url}`);
+};
+
+http.createServer(listener).listen(3000);</code></pre></div>
+  <div class="tool">
+    <div class="tool-h"><h4>ทดลองแยก URL</h4><span>INTERACTIVE</span></div>
+    <label class="f">พิมพ์ URL<input type="text" id="urlIn" value="http://localhost:3000/api/subjects/5?page=2&amp;limit=10&amp;fav_subj=Backend&amp;fav_subj=Frontend"></label>
+    <div class="out" id="urlOut"></div>
+  </div>
+  <div class="key"><b>ทำไม <code>filter(Boolean)</code>?</b> <code>'/users/123'.split('/')</code> ได้ <code>['', 'users', '123']</code> ตัวแรกเป็นสตริงว่าง <code>Boolean('')</code> เป็น false จึงถูกกรองทิ้ง เหลือ <code>['users', '123']</code></div>
+</section>
+
+<!-- ================= WEEK 3 ================= -->
+<section class="wk" id="w3" data-title="RESTful API" data-wk="03">
+  <div class="sec-head">
+    <div class="eyebrow">สัปดาห์ 3 · 20 ส.ค. <label class="mark"><input type="checkbox" data-done="w3"> อ่านแล้ว</label></div>
+    <h2>Introduction to RESTful API</h2>
+    <p class="sum">REST = <b>RE</b>presentational <b>S</b>tate <b>T</b>ransfer โดย Roy Fielding · server เปิดให้เข้าถึง <b>resource</b> แต่ละ resource ระบุด้วย URI และส่งเป็น representation (นิยม JSON)</p>
+  </div>
+
+  <h3 class="t">6 หลักการ (constraints) ของ REST</h3>
+  <div class="grid2">
+    <div class="card"><h4>1. Client–Server</h4><p>แยก client กับ server ออกจากกัน server มี web service ให้บริการ client ส่ง request มา server จะปฏิเสธหรือตอบสนองก็ได้</p></div>
+    <div class="card"><h4>2. Stateless</h4><p>ทุก request ต้อง<b>มีข้อมูลครบในตัวเอง</b> server ห้ามอาศัย context ที่เก็บไว้จาก request ก่อนหน้า <b>client ต้องเก็บ session state เอง</b></p></div>
+    <div class="card"><h4>3. Uniform Interface</h4><p>ใช้ HTTP verb มาตรฐานจัดการ resource: POST สร้าง, GET อ่าน, PUT แก้ไข, DELETE ลบ (รายละเอียดด้านล่าง)</p></div>
+    <div class="card"><h4>4. Layered System</h4><p>ระบบแบ่งเป็นชั้น แต่ละชั้น<b>เห็นแค่ชั้นที่ติดกัน</b> client ไม่รู้ว่าคุยกับ server ปลายทางหรือตัวกลาง</p></div>
+    <div class="card"><h4>5. Cacheable</h4><p>response ต้องบอก (ทางตรงหรืออ้อม) ว่า cache ได้หรือไม่ ถ้าได้ client นำ response มาใช้ซ้ำกับ request เดียวกันในช่วงเวลาที่กำหนด</p></div>
+    <div class="card"><h4>6. Code on Demand <span class="muted">(optional)</span></h4><p>server ส่งโค้ด (script/applet) ให้ client รันเพื่อขยายความสามารถได้ <b>เป็นข้อเดียวที่ไม่บังคับ</b></p></div>
+  </div>
+
+  <h3 class="t">Uniform Interface: 4 เสาหลัก</h3>
+  <div class="tbl"><table>
+    <tr><th>เสาหลัก</th><th>ความหมาย</th></tr>
+    <tr><td>Resource Identification</td><td>URI บอก <b>resource (คำนาม)</b> ไม่ใช่ action เช่น <code>/api/v1/users</code></td></tr>
+    <tr><td>Manipulation via Representations</td><td>แลกเปลี่ยน state ด้วยรูปแบบมาตรฐาน (JSON)</td></tr>
+    <tr><td>Self-Descriptive Messages</td><td>ใช้ HTTP method และ header มาตรฐาน เช่น <code>Content-Type: application/json</code></td></tr>
+    <tr><td>HATEOAS</td><td>ใส่ลิงก์ (hypermedia) ใน response เพื่อบอก client ว่าทำอะไรต่อได้</td></tr>
+  </table></div>
+
+  <h3 class="t">ออกแบบ endpoint ให้ถูกหลัก</h3>
+  <div class="tbl"><table>
+    <tr><th>Method</th><th>URI</th><th>ความหมาย</th></tr>
+    <tr><td><span class="method GET">GET</span></td><td><code>/api/products</code></td><td>ดึงสินค้าทั้งหมด (collection)</td></tr>
+    <tr><td><span class="method GET">GET</span></td><td><code>/api/products/1</code></td><td>ดึงสินค้า id = 1 (singleton)</td></tr>
+    <tr><td><span class="method GET">GET</span></td><td><code>/api/products/1/orders</code></td><td>ดึง orders ของสินค้า id = 1 (sub-collection)</td></tr>
+    <tr><td><span class="method POST">POST</span></td><td><code>/api/products</code></td><td>เพิ่มสินค้าใหม่ (ส่ง body)</td></tr>
+    <tr><td><span class="method PUT">PUT</span></td><td><code>/api/products/1</code></td><td>แก้ไขสินค้า id = 1 (ส่ง body)</td></tr>
+    <tr><td><span class="method DELETE">DELETE</span></td><td><code>/api/products/1</code></td><td>ลบสินค้า id = 1</td></tr>
+  </table></div>
+  <div class="grid2">
+    <div class="card"><h4>✓ ควรทำ</h4><ul><li>URI ลงท้ายด้วย<b>คำนาม</b> และใช้<b>พหูพจน์</b> เสมอ (<code>/users</code>)</li><li>ให้ HTTP verb เป็นตัวบอก action</li><li>ส่ง status code ที่ถูกต้องทั้งตอนสำเร็จและ error</li><li>ดู endpoint + method แล้วรู้ทันทีว่าทำอะไร</li></ul></div>
+    <div class="card"><h4>✗ ไม่ควรทำ</h4><ul><li><code>/getUsers</code>, <code>/createProduct</code> (มีคำกริยาใน URI)</li><li><code>/user/1</code> ปนกับ <code>/users</code> (เอกพจน์ปนพหูพจน์)</li><li>ตอบ 200 ทุกกรณีแล้วใส่ error ไว้ใน body</li></ul></div>
+  </div>
+
+  <h3 class="t">Layered System ในโค้ด</h3>
+  <div class="tree">src/
+├── server.js        → ตั้งค่า HTTP server
+├── router.js        → จับคู่ route + จัดการ HTTP (Controller)
+├── services/        → business logic (ไม่ผูกกับ framework)
+└── repositories/    → เข้าถึงข้อมูล (ไฟล์ / DB)</div>
+  <div class="key"><b>ประโยชน์ของการแบ่งชั้น:</b> Scalability (เพิ่ม cache/load balancer ได้โดย client ไม่ต้องแก้), Separation of Concerns (แยกการ parse HTTP ออกจาก business logic และ database) และ Security</div>
+</section>
+
+<!-- ================= WEEK 4 ================= -->
+<section class="wk" id="w4" data-title="Express Framework" data-wk="04">
+  <div class="sec-head">
+    <div class="eyebrow">สัปดาห์ 4 · 27 ส.ค. <label class="mark"><input type="checkbox" data-done="w4"> อ่านแล้ว</label></div>
+    <h2>Express.js Framework</h2>
+    <p class="sum">web framework ที่ minimalist, unopinionated และเร็ว ครอบ http ของ Node ไว้ด้วยระบบ routing และ middleware เป็นตัว E ใน MEAN/MERN stack</p>
+  </div>
+
+  <div class="tbl"><table>
+    <tr><th>งาน</th><th>Node http ดิบ</th><th>Express</th></tr>
+    <tr><td>อ่าน body</td><td>ต่อ chunk เองจาก stream (<code>req.on('data')</code>)</td><td><code>app.use(express.json())</code> แล้วใช้ <code>req.body</code></td></tr>
+    <tr><td>Routing</td><td>if/else เช็ก <code>req.url</code> เอง</td><td><code>app.get('/api/subjects/:id', …)</code></td></tr>
+    <tr><td>อ่าน URL/query</td><td><code>new URL()</code> + <code>searchParams</code></td><td><code>req.params</code>, <code>req.query</code></td></tr>
+    <tr><td>ส่ง response</td><td><code>res.writeHead()</code> + <code>res.end()</code></td><td><code>res.status(201).json(obj)</code></td></tr>
+  </table></div>
+
+  <h3 class="t">3 ที่มาของข้อมูลใน request</h3>
+  <div class="code"><div class="bar"><span>PUT /api/subjects/5?filter=INT&amp;page=1&amp;size=10</span><button class="copy">คัดลอก</button></div><pre><code class="language-javascript">import express from 'express';
+const app = express();
+app.use(express.json());                 // middleware: parse JSON body → req.body
+
+app.put('/api/subjects/:id', (req, res) =&gt; {
+  const id = req.params.id;                    // '5'      ← จาก path (:id)
+  const { filter, page, size } = req.query;    // 'INT','1','10' ← จาก ?query
+  const subject = req.body;                    // { code, title, credit } ← จาก body
+  subject.id = id;
+  res.status(200).json(subject);
+});
+
+app.listen(3000);</code></pre></div>
+  <div class="warn"><b>กับดัก:</b> ค่าใน <code>req.params</code> และ <code>req.query</code> เป็น <b>string เสมอ</b> ถ้าจะคำนวณต้อง <code>parseInt()</code> / <code>Number()</code> ก่อน และ <code>res.status()</code> อย่างเดียว<b>ยังไม่ส่ง response</b> ต้องต่อด้วย <code>.json()</code> หรือ <code>.send()</code></div>
+
+  <h3 class="t">Middleware</h3>
+  <div class="prose">
+    <p>Middleware คือฟังก์ชัน <code>(req, res, next)</code> ที่ทำงาน<b>ก่อนถึง router</b> เช่น log, parse body, ตรวจสิทธิ์, validate, เปิด CORS ทำงานเรียงตามลำดับที่ <code>app.use()</code></p>
+    <ul>
+      <li>เรียก <code>next()</code> → ส่งต่อให้ middleware ตัวถัดไป</li>
+      <li>เรียก <code>res.send()</code> / <code>res.json()</code> → จบ ส่ง response กลับ</li>
+      <li>เรียก <code>next(err)</code> → ข้ามไป error-handling middleware ทันที</li>
+    </ul>
+    <p class="muted">ประเภท: Application-level, Router-level, Error-handling, Built-in (<code>express.json()</code>), Third-party</p>
+  </div>
+
+  <h3 class="t">หน้าที่ของแต่ละเลเยอร์</h3>
+  <div class="tbl"><table>
+    <tr><th>เลเยอร์</th><th>หน้าที่</th><th>ควรมี</th><th>ห้ามมี</th><th>เปรียบเทียบ</th></tr>
+    <tr><td><b>Controller / Router</b></td><td>รับ HTTP request, ส่ง response</td><td>routing, mapping, validate input</td><td>business logic, SQL</td><td>แผนกต้อนรับโรงพยาบาล</td></tr>
+    <tr><td><b>Service</b></td><td>กฎทางธุรกิจ ประสานงาน</td><td>logic, การคำนวณ, เรียกหลาย repo</td><td>รายละเอียด HTTP หรือ DB</td><td>หมอ ตรวจ วินิจฉัย</td></tr>
+    <tr><td><b>Repository</b></td><td>อ่าน/เขียนข้อมูล (CRUD)</td><td>query, persistence</td><td>business logic, HTTP</td><td>ห้องเวชระเบียน</td></tr>
+  </table></div>
+
+  <div class="code"><div class="bar"><span>src/routes/subject-route.js</span><button class="copy">คัดลอก</button></div><pre><code class="language-javascript">import express from 'express';
+import * as service from '../services/subject-service.js';
+
+const router = express.Router();
+
+router.get('/', async (req, res) =&gt; {
+  res.json(await service.getAllSubjects());
+});
+
+router.get('/:id', async (req, res) =&gt; {
+  const subject = await service.getSubjectById(req.params.id);
+  if (!subject) return res.status(404).json({ message: 'Subject not found' });
+  res.json(subject);
+});
+
+export default router;
+
+// app.js:  app.use('/api/subjects', router)  → GET /api/subjects/5 จะเข้า router.get('/:id')</code></pre></div>
+</section>
+
+<!-- ================= WEEK 5 ================= -->
+<section class="wk" id="w5" data-title="Database Connection" data-wk="05">
+  <div class="sec-head">
+    <div class="eyebrow">สัปดาห์ 5 · 3 ก.ย. <label class="mark"><input type="checkbox" data-done="w5"> อ่านแล้ว</label></div>
+    <h2>เชื่อมต่อ MySQL ด้วย mysql2</h2>
+    <p class="sum">สร้าง connection pool, ทำ CRUD ใน repository และใช้ prepared statement กัน SQL Injection</p>
+  </div>
+
+  <div class="grid3">
+    <div class="card"><h4>1. ติดตั้ง driver</h4><p><code>npm install mysql2</code></p></div>
+    <div class="card"><h4>2. สร้าง Pool</h4><p>pool คือที่จัดการ connection หลายเส้น ใช้ซ้ำได้ ไม่ต้องเปิดใหม่ทุก request</p></div>
+    <div class="card"><h4>3. ส่ง SQL</h4><p><code>await pool.query(sql, params)</code> ได้ผลเป็น array <code>[rows, fields]</code></p></div>
+  </div>
+
+  <div class="code"><div class="bar"><span>src/configs/db-config.js</span><button class="copy">คัดลอก</button></div><pre><code class="language-javascript">import * as mysql from 'mysql2/promise';
+
+const pool = mysql.createPool({
+  host: 'localhost',
+  user: 'root',
+  password: 'mysql@sit',
+  database: 'sampledb',
+});
+
+export default pool;</code></pre></div>
+
+  <h3 class="t">ผลลัพธ์จาก pool.query</h3>
+  <div class="tbl"><table>
+    <tr><th>คำสั่ง</th><th>ได้อะไรใน <code>[result]</code></th><th>ใช้ตรวจอะไร</th></tr>
+    <tr><td><code>SELECT</code></td><td>array ของแถว (<code>rows</code>)</td><td><code>rows.length === 0</code> → ไม่พบ (404)</td></tr>
+    <tr><td><code>INSERT</code></td><td>ResultSetHeader</td><td><code>result.insertId</code> → id ที่เพิ่งสร้าง</td></tr>
+    <tr><td><code>UPDATE</code> / <code>DELETE</code></td><td>ResultSetHeader</td><td><code>result.affectedRows &gt; 0</code> → สำเร็จ</td></tr>
+  </table></div>
+
+  <div class="code"><div class="bar"><span>src/repositories/subject-repo.js</span><button class="copy">คัดลอก</button></div><pre><code class="language-javascript">import pool from '../configs/db-config.js';
+
+export async function findAll() {
+  const [rows] = await pool.query('SELECT * FROM subjects');
+  return rows;
+}
+
+export async function findById(id) {
+  const [rows] = await pool.query('SELECT * FROM subjects WHERE id = ?', [id]);
+  return rows.length === 0 ? null : rows[0];
+}
+
+export async function create(subject) {
+  const [result] = await pool.query(
+    'INSERT INTO subjects (subject_code, subject_title, credit) VALUES (?, ?, ?)',
+    [subject.code, subject.title, subject.credit]);
+  return findById(result.insertId);
+}
+
+export async function update(id, subject) {
+  const [result] = await pool.query(
+    'UPDATE subjects SET subject_code = ?, subject_title = ?, credit = ? WHERE id = ?',
+    [subject.code, subject.title, subject.credit, id]);
+  if (result.affectedRows === 0) return null;
+  return findById(id);
+}
+
+export async function remove(id) {
+  const [result] = await pool.query('DELETE FROM subjects WHERE id = ?', [id]);
+  return result.affectedRows &gt; 0;
+}</code></pre></div>
+
+  <h3 class="t">SQL Injection กับ Prepared Statement</h3>
+  <div class="tool">
+    <div class="tool-h"><h4>ลองเป็นแฮกเกอร์</h4><span>INTERACTIVE</span></div>
+    <label class="f">ค่า id ที่ผู้ใช้ส่งมา (เช่น <code>/api/subjects/:id</code>)<input type="text" id="sqliIn" value="1 OR 1=1"></label>
+    <div class="grid2">
+      <div class="card"><h4><span class="pill bad">อันตราย</span> ต่อสตริงเอง</h4><div class="out" id="sqliBad"></div><p id="sqliBadNote" class="muted"></p></div>
+      <div class="card"><h4><span class="pill ok">ปลอดภัย</span> ใช้ <code>?</code> placeholder</h4><div class="out" id="sqliGood"></div><p class="muted">ค่าถูก escape เป็นข้อมูล ไม่ใช่คำสั่ง SQL จึงหาแถวที่ id เท่ากับข้อความนั้นตรง ๆ</p></div>
+    </div>
+  </div>
+  <div class="key"><b>จำ:</b> ห้ามเอาค่าจากผู้ใช้ไปต่อสตริง SQL เด็ดขาด ให้ใส่ <code>?</code> แล้วส่งค่าเป็น array ตัวที่ 2 ของ <code>query()</code> เสมอ</div>
+
+  <h3 class="t">ก่อนมี Express: อ่าน body จาก stream เอง</h3>
+  <div class="code"><div class="bar"><span>router.js · getBody()</span><button class="copy">คัดลอก</button></div><pre><code class="language-javascript">function getBody(request) {
+  return new Promise((resolve, reject) =&gt; {
+    let body = '';
+    request.on('data', chunk =&gt; { body += chunk.toString(); }); // รับทีละ chunk
+    request.on('end', () =&gt; resolve(body ? JSON.parse(body) : null)); // ครบแล้ว parse
+    request.on('error', err =&gt; reject(err));
+  });
+}</code></pre></div>
+  <p class="muted">นี่คือสิ่งที่ <code>express.json()</code> ทำให้อัตโนมัติ เข้าใจไว้จะตอบข้อสอบทฤษฎีเรื่อง stream/body ได้</p>
+</section>
+
+<!-- ================= WEEK 6 ================= -->
+<section class="wk" id="w6" data-title="Error Handling" data-wk="08">
+  <div class="sec-head">
+    <div class="eyebrow">สัปดาห์ 8 · 1 ต.ค. <label class="mark"><input type="checkbox" data-done="w6"> อ่านแล้ว</label></div>
+    <h2>Validation และ Error Handling</h2>
+    <p class="sum">ถ้า error ถูก throw แล้วไม่มีใคร catch, Node จะจบ process (<code>process.exit(1)</code>) ทั้ง server ล่ม การจัดการ error จึงเป็นเรื่องบังคับ</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card"><h4>ทำไมต้องจัดการ error</h4><ul><li>กัน app crash / downtime</li><li>ข้อความ error ที่ผู้ใช้เข้าใจ</li><li>ไม่หลุด stack trace / ข้อมูลลับ</li><li>ช่วย debug, monitor, แจ้งเตือน</li></ul></div>
+    <div class="card"><h4>ประเภท error</h4><ul><li><b>Programming error</b> บั๊ก logic เช่น TypeError</li><li><b>Operational error</b> network timeout, DB ล่ม, ไม่พบไฟล์</li><li><b>Expected vs Unexpected</b> อันที่คาดไว้ต้องจัดการให้เรียบร้อย</li></ul></div>
+  </div>
+
+  <h3 class="t">Error propagation</h3>
+  <div class="prose"><p>error ที่เกิดในฟังก์ชันจะถูกส่ง<b>ขึ้นไปตาม call stack</b> (b → a → main) จนกว่าจะมีคน catch ถ้าไม่มีใคร catch เลยจนถึง global scope โปรแกรมจะหยุด ในระบบเลเยอร์ก็เหมือนกัน: Repository throw → Service ไม่ catch → Controller ส่ง <code>next(err)</code> → error middleware ตอบกลับ</p></div>
+
+  <div class="grid2">
+    <div class="card"><h4>Property ของ Error object</h4><ul><li><code>message</code> ข้อความอธิบาย</li><li><code>name</code> ชนิด เช่น "TypeError"</li><li><code>stack</code> stack trace (ไม่เป็นมาตรฐานแต่ทุกที่รองรับ)</li><li><code>code</code> รหัส system error เช่น "EACCES", "ENOENT"</li><li><code>errno</code> ตัวเลขของ system error</li></ul></div>
+    <div class="card"><h4>Error middleware ต่างจาก middleware ปกติ</h4><p>ปกติ: <code>(req, res, next)</code> 3 ตัว</p><p>Error: <code>(err, req, res, next)</code> <b>4 ตัว</b> Express ดูจากจำนวน parameter</p><p>ต้องวางไว้<b>ท้ายสุด</b> หลัง route ทั้งหมด ถ้าไม่เขียนเลย Express จะตอบเป็น HTML พร้อม stack trace</p></div>
+  </div>
+
+  <div class="code"><div class="bar"><span>src/middlewares/error-handler.js</span><button class="copy">คัดลอก</button></div><pre><code class="language-javascript">export class AppError extends Error {
+  static errors = { 400: 'BAD_REQUEST', 401: 'UNAUTHORIZED', 403: 'FORBIDDEN',
+                    404: 'NOT_FOUND', 409: 'CONFLICT', 500: 'INTERNAL_SERVER_ERROR' };
+  constructor(message, statusCode = 500) {
+    super(message);
+    this.statusCode = statusCode;
+    this.error = AppError.errors[statusCode];
+    this.isOperational = true;
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+// ไม่มี route ไหนตรง → 404
+export function notFound(req, res, next) {
+  next(new AppError(`Route ${req.method} ${req.originalUrl} not found`, 404));
+}
+
+// error-handling middleware (4 parameters) วางท้ายสุดใน app.js
+export function errorHandler(err, req, res, next) {
+  const status = err.statusCode || err.status || 500;
+  res.status(status).json({
+    error: err.error || AppError.errors[status] || err.code,
+    statusCode: status,
+    message: err.message,
+    path: req.originalUrl,
+    timestamp: new Date().toISOString(),
+  });
+}</code></pre></div>
+
+  <div class="warn"><b>async handler กับ error:</b> ใน Express 5 ถ้าฟังก์ชัน async throw หรือ Promise reject จะถูกส่งเข้า <code>next(err)</code> ให้อัตโนมัติ แต่ใน Express 4 ต้องห่อ <code>try { … } catch (e) { next(e) }</code> เอง ไม่งั้น request ค้างและอาจ crash ดูเวอร์ชันใน package.json ของ template ก่อน ถ้าไม่แน่ใจให้ใส่ try/catch ไว้ทุก route ปลอดภัยสุด</div>
+
+  <h3 class="t">Status code ที่ต้องจำ</h3>
+  <div class="tbl"><table>
+    <tr><th>Code</th><th>ชื่อ</th><th>ใช้เมื่อ</th></tr>
+    <tr><td class="num"><b>200</b></td><td>OK</td><td>สำเร็จ (GET, PUT, DELETE)</td></tr>
+    <tr><td class="num"><b>201</b></td><td>Created</td><td>สร้าง resource ใหม่สำเร็จ (POST)</td></tr>
+    <tr><td class="num"><b>400</b></td><td>Bad Request</td><td>client ส่งข้อมูลผิด เช่น ไม่มี body หรือขาด field ที่จำเป็น</td></tr>
+    <tr><td class="num"><b>401</b></td><td>Unauthorized</td><td>ยืนยันตัวตนไม่ผ่าน (ไม่ได้ login / token ผิด)</td></tr>
+    <tr><td class="num"><b>403</b></td><td>Forbidden</td><td>ยืนยันตัวตนแล้ว แต่<b>ไม่มีสิทธิ์</b>เข้าถึง</td></tr>
+    <tr><td class="num"><b>404</b></td><td>Not Found</td><td>ไม่มี resource นั้น</td></tr>
+    <tr><td class="num"><b>409</b></td><td>Conflict</td><td>ขัดกับสถานะปัจจุบัน เช่น ข้อมูลซ้ำ (unique)</td></tr>
+    <tr><td class="num"><b>412</b></td><td>Precondition Failed</td><td>เงื่อนไขใน request header เป็นเท็จ</td></tr>
+    <tr><td class="num"><b>500</b></td><td>Internal Server Error</td><td>error ทั่วไปฝั่ง server</td></tr>
+    <tr><td class="num"><b>503</b></td><td>Service Unavailable</td><td>บริการใช้งานไม่ได้ชั่วคราว</td></tr>
+  </table></div>
+
+  <div class="tool">
+    <div class="tool-h"><h4>ฝึกเลือก status code</h4><span id="scScore">0 / 0</span></div>
+    <p class="scen" id="scQ"></p>
+    <div class="codes" id="scBtns"></div>
+    <p class="muted" id="scA"></p>
+    <div class="row"><button class="btn" id="scNext">สถานการณ์ถัดไป →</button></div>
+  </div>
+</section>
+
+<!-- ================= WEEK 7 ================= -->
+<section class="wk" id="w7" data-title="Pagination & DTO" data-wk="09">
+  <div class="sec-head">
+    <div class="eyebrow">สัปดาห์ 9–10 · 8 ต.ค. <label class="mark"><input type="checkbox" data-done="w7"> อ่านแล้ว</label></div>
+    <h2>Pagination และ DTO</h2>
+    <p class="sum">แบ่งข้อมูลเป็นหน้าเพื่อลดภาระ DB, หน่วยความจำ และ network และใช้ DTO คุมหน้าตาข้อมูลที่ส่งออกไป</p>
+  </div>
+
+  <h3 class="t">สูตรหัวใจ</h3>
+  <div class="key" style="font-family:var(--f-mono);font-size:17px"><b>OFFSET = (page − 1) × limit</b></div>
+  <div class="tbl"><table>
+    <tr><th>page</th><th>limit</th><th>offset</th><th>ได้แถวที่</th></tr>
+    <tr class="num"><td>1</td><td>10</td><td>0</td><td>1–10</td></tr>
+    <tr class="num"><td>2</td><td>10</td><td>10</td><td>11–20</td></tr>
+    <tr class="num"><td>3</td><td>10</td><td>20</td><td>21–30</td></tr>
+    <tr class="num"><td>9</td><td>10</td><td>80</td><td>81–90</td></tr>
+  </table></div>
+
+  <div class="tool">
+    <div class="tool-h"><h4>เครื่องคิด Pagination</h4><span>INTERACTIVE</span></div>
+    <div class="row">
+      <label class="f" style="flex:1 1 90px">page<input type="number" id="pgPage" value="2"></label>
+      <label class="f" style="flex:1 1 90px">limit<input type="number" id="pgLimit" value="20"></label>
+      <label class="f" style="flex:1 1 90px">totalItems<input type="number" id="pgTotal" value="138"></label>
+    </div>
+    <p class="muted" style="font-size:13px">ลองใส่ page = -3 หรือ limit = 500 เพื่อดูว่า Math.max / Math.min ช่วยกันค่าผิดยังไง</p>
+    <div class="out" id="pgOut"></div>
+  </div>
+
+  <h3 class="t">ลำดับการทำงาน</h3>
+  <div class="prose"><ol>
+    <li>client ส่ง <code>GET /api/products?page=2&amp;limit=20</code></li>
+    <li>middleware ตรวจ page/limit แล้วคำนวณ offset เก็บไว้ใน <code>req.pagination</code></li>
+    <li>repository query ด้วย <code>LIMIT ? OFFSET ?</code> และ <code>COUNT(*)</code> หาจำนวนทั้งหมด</li>
+    <li>ส่ง data พร้อม pagination metadata กลับไป</li>
+  </ol></div>
+
+  <div class="grid2">
+    <div class="card"><h4>Best practices</h4><ul><li>page ต้อง ≥ 1 → <code>Math.max(parseInt(page), 1)</code></li><li>จำกัด limit สูงสุด เช่น 100 → <code>Math.min(parseInt(limit), 100)</code></li><li>ใช้ prepared statement</li><li>ทำ index คอลัมน์ที่ใช้ filter/sort</li><li>ถ้าผู้ใช้เข้าหน้าลึกมาก ๆ พิจารณา <b>cursor pagination</b></li></ul></div>
+    <div class="card"><h4>Metadata ที่ควรส่ง</h4><ul><li><code>totalPages = Math.ceil(total / limit)</code></li><li><code>hasNextPage = page * limit &lt; total</code></li><li><code>hasPrevPage = page &gt; 1</code></li></ul><p class="muted">ต้องรู้ totalItems ก่อน จึงต้อง query <code>SELECT COUNT(*) AS total</code> แยกอีกครั้ง</p></div>
+  </div>
+
+  <div class="code"><div class="bar"><span>src/middlewares/pagination-middleware.js</span><button class="copy">คัดลอก</button></div><pre><code class="language-javascript">export const queryParser = () =&gt; (req, res, next) =&gt; {
+  const query = req.query || {};
+  if (query.page === undefined || query.limit === undefined) {
+    req.pagination = null;            // ไม่ขอแบ่งหน้า → ส่งทั้งหมด
+    return next();
+  }
+  const page  = Math.max(parseInt(query.page)  || 1, 1);    // ไม่ให้ติดลบ / NaN
+  const limit = Math.min(parseInt(query.limit) || 20, 100); // ไม่เกิน 100
+  const offset = (page - 1) * limit;   // ใช้ limit ที่ผ่านการตรวจแล้ว
+  req.pagination = { page, limit, offset };
+  next();
+};
+
+// app.js: app.use(queryParser())  ← ต้องวางก่อน router</code></pre></div>
+
+  <h3 class="t">DTO (Data Transfer Object)</h3>
+  <div class="prose"><p>DTO คือ object ที่กำหนด<b>รูปร่างของข้อมูลที่ส่งข้ามเลเยอร์/ออกไปทาง API</b> แยก "สัญญาของ API" ออกจาก "โครงสร้างตารางในฐานข้อมูล" ข้อมูลจะถูก map จาก entity → DTO ผ่าน <b>mapper</b> และจาก entity เดียวทำ DTO ได้หลายแบบ (เช่น summary กับ detail)</p></div>
+  <div class="grid2">
+    <div class="card"><h4>Entity (ในฐานข้อมูล)</h4><div class="out">id, name, email,
+password_hash, role,
+created_at</div></div>
+    <div class="card"><h4>Response DTO (ส่งออก)</h4><div class="out">id, name, email, role</div><p class="muted"><b>ห้าม</b>ส่ง <code>password_hash</code> ออกไปเด็ดขาด</p></div>
+  </div>
+  <div class="card"><h4>ทำไมใช้ DTO</h4><ul><li>กันไม่ให้ field ลับหลุดออกไปโดยไม่ตั้งใจ</li><li>response หน้าตาสม่ำเสมอ</li><li>validate และเขียนเอกสาร API ง่ายขึ้น</li><li>ลด coupling ระหว่าง DB กับ client (เปลี่ยนชื่อคอลัมน์ได้โดย API ไม่เปลี่ยน)</li></ul></div>
+
+  <div class="code"><div class="bar"><span>src/mappers/product-mapper.js</span><button class="copy">คัดลอก</button></div><pre><code class="language-javascript">export default class ProductMapper {
+  // ข้อมูลย่อ (ใช้ตอน list)
+  static toSummaryDTO(entity) {
+    return {
+      id: entity.productCode,
+      name: entity.productName,
+      scale: entity.productScale,
+      retailPrice: entity.MSRP,
+    };
+  }
+  // ข้อมูลเต็ม (ใช้ตอนดูทีละชิ้น): เปลี่ยนชื่อ field แล้วตัดของเดิมออก
+  static toDetailDTO(entity) {
+    const { MSRP, buyPrice, ...data } = entity;
+    return { ...data, retailPrice: MSRP, price: buyPrice };
+  }
+  static map(entity, view = 'full') {
+    return view === 'summary' ? this.toSummaryDTO(entity) : this.toDetailDTO(entity);
+  }
+  static maps(entities, view = 'summary') {
+    const list = entities.map(e =&gt; this.map(e, view));
+    if (entities.totalItems !== undefined) list.totalItems = entities.totalItems; // พก total ไปด้วย
+    return list;
+  }
+}</code></pre></div>
+
+  <div class="code"><div class="bar"><span>src/mappers/api-response.js</span><button class="copy">คัดลอก</button></div><pre><code class="language-javascript">export function apiResponse(res, data, pagination = null, status = 200) {
+  if (!pagination) {
+    return res.status(status).json({ success: true, data, timestamp: new Date().toISOString() });
+  }
+  const { page, limit } = pagination;
+  const total = data.totalItems;
+  return res.status(status).json({
+    success: true,
+    data,
+    pagination: {
+      total, page, limit,
+      totalPages: Math.ceil(total / limit),
+      hasNextPage: page * limit &lt; total,
+      hasPrevPage: page &gt; 1,
+    },
+    timestamp: new Date().toISOString(),
+  });
+}</code></pre></div>
+  <div class="warn"><b>รูปแบบ response ในข้อสอบ</b> ให้ยึดตาม spec ของตัวเองทุกตัวอักษร (ชื่อ key เช่น <code>hasPrevPage</code> หรือ <code>hasPreviousPage</code>, <code>total</code> หรือ <code>totalItems</code>) เพราะ test runner ตรวจตาม format เป๊ะ สไลด์สองหน้ายังใช้ชื่อไม่เหมือนกันเลย</div>
+
+  <h3 class="t">เสริม: Filtering และ Sorting</h3>
+  <div class="prose"><p>หัวข้อนี้อยู่ใน course outline แต่ไม่มีสไลด์ หลักการที่ใช้ต่อยอดจาก pagination คือรับค่าจาก query string แล้วสร้าง SQL อย่างปลอดภัย</p></div>
+  <div class="code"><div class="bar"><span>ตัวอย่าง: GET /api/products?name=car&amp;sort=MSRP&amp;order=desc&amp;page=1&amp;limit=10</span><button class="copy">คัดลอก</button></div><pre><code class="language-javascript">const SORTABLE = ['productName', 'MSRP', 'buyPrice'];   // whitelist คอลัมน์
+
+export async function findAll({ name, sort, order } = {}, pagination) {
+  let sql = 'SELECT * FROM products';
+  const params = [];
+  if (name) { sql += ' WHERE productName LIKE ?'; params.push(`%${name}%`); } // filter
+  if (SORTABLE.includes(sort)) {                                              // sort
+    sql += ` ORDER BY ${sort} ${order === 'desc' ? 'DESC' : 'ASC'}`;
+  }
+  if (pagination) { sql += ' LIMIT ? OFFSET ?'; params.push(pagination.limit, pagination.offset); }
+  const [rows] = await pool.query(sql, params);
+  return rows;
+}</code></pre></div>
+  <p class="muted">ชื่อคอลัมน์ใส่ <code>?</code> ไม่ได้ (? ใช้กับค่าเท่านั้น) จึงต้องเช็กกับ whitelist ก่อนเอาไปต่อสตริง ส่วนค่าที่ใช้ค้นหายังใช้ <code>?</code> ตามปกติ และ ORDER BY ต้องมาก่อน LIMIT</p>
+</section>
+
+<!-- ================= EXAM ================= -->
+<section class="wk" id="exam" data-title="เตรียมสอบปฏิบัติ" data-wk="EX">
+  <div class="sec-head">
+    <div class="eyebrow">จากคาบซ้อมสอบ 15 ต.ค. <label class="mark"><input type="checkbox" data-done="exam"> อ่านแล้ว</label></div>
+    <h2>เตรียมสอบปฏิบัติ</h2>
+    <p class="sum">ได้ zip template โปรเจกต์ (Express ESM) ของแต่ละคน + ไฟล์ SQL สร้างฐานข้อมูล + spec (.md) + โฟลเดอร์ test ตรวจคะแนนเองได้ทีละข้อ</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card"><h4>ขั้นตอนวันสอบ</h4><ol style="margin:0;padding-left:1.2em">
+      <li>15 นาทีแรกยังมีเน็ต: แตก zip ระวังโฟลเดอร์ซ้อน, เปิดใน WebStorm แล้ว <code>npm install</code>, โหลดเอกสาร/โค้ดเก่าของตัวเองเก็บในเครื่อง</li>
+      <li>หลัง 15 นาที<b>ปิดเน็ต</b> เปิดเน็ตอีก = ทุจริต</li>
+      <li>รัน SQL script สร้าง DB (WebStorm: คลิกขวา data source → Run SQL Script) แล้ว refresh ดูตาราง</li>
+      <li>ตั้ง student ID ใน <code>app.js</code> → route ทั้งหมดอยู่ใต้ <code>/api/&lt;รหัสนักศึกษา&gt;</code></li>
+      <li>รันโปรเจกต์ที่พอร์ต 3000 แล้วทดสอบ: <code>node test-runner.mjs &lt;รหัส&gt;</code></li>
+    </ol></div>
+    <div class="card"><h4>กติกาที่ต้องจำ</h4><ul>
+      <li>ใช้เครื่องคณะ (Windows) คนใช้ Mac ควรซ้อมบน Windows</li>
+      <li><b>ห้ามติดตั้ง dependency เพิ่ม</b> ใช้เฉพาะที่ให้มา</li>
+      <li>เพิ่มไฟล์/โฟลเดอร์เองได้ตามสะดวก</li>
+      <li>template มี config, repo/service/route ตัวอย่าง, mapper, pagination middleware แต่ <b>error handling ต้องเขียนเอง</b></li>
+      <li>ไม่มี AI ช่วย ใช้ได้แค่เอกสารที่โหลดไว้</li>
+      <li><code>timestamp</code> อาจถูกตรวจว่าเป็นเวลาปัจจุบันจริง อย่า hard-code</li>
+    </ul></div>
+  </div>
+
+  <h3 class="t">เช็กลิสต์ก่อนส่ง</h3>
+  <ul class="checklist" id="examCheck">
+    <li><input type="checkbox" id="ck1"><label for="ck1"><code>"type": "module"</code> และ import ทุกไฟล์มี <code>.js</code> ต่อท้าย</label></li>
+    <li><input type="checkbox" id="ck2"><label for="ck2">ชื่อ DB / user / password ใน db-config ตรงกับเครื่อง</label></li>
+    <li><input type="checkbox" id="ck3"><label for="ck3">ลำดับใน app.js: <code>express.json()</code> → <code>queryParser()</code> → routers → notFound → errorHandler</label></li>
+    <li><input type="checkbox" id="ck4"><label for="ck4">path ตรง spec: <code>/api/&lt;รหัส&gt;/…</code> พหูพจน์ตามที่ spec เขียน</label></li>
+    <li><input type="checkbox" id="ck5"><label for="ck5">status code ถูก: POST = 201, ไม่พบ = 404, ข้อมูลไม่ครบ = 400, ซ้ำ = 409</label></li>
+    <li><input type="checkbox" id="ck6"><label for="ck6">response format ตรง spec ทุก key (<code>success</code>, <code>data</code>, <code>pagination</code>, <code>timestamp</code>)</label></li>
+    <li><input type="checkbox" id="ck7"><label for="ck7">DTO ตัด/เปลี่ยนชื่อ field ตามที่ spec สั่ง</label></li>
+    <li><input type="checkbox" id="ck8"><label for="ck8">รัน test runner ผ่าน แล้วรันซ้ำหลังแก้ทุกครั้ง</label></li>
+  </ul>
+
+  <h3 class="t">โครงโปรเจกต์ครบชุด (เก็บไว้ดูตอนสอบ)</h3>
+  <p class="muted">ตัวอย่างใช้ตาราง <code>brands</code> แบบที่เจอในคาบซ้อมสอบ (id, name, country, website, …) เปลี่ยนชื่อตาราง/field ตาม spec ของตัวเอง</p>
+  <div class="tree">src/
+├── app.js
+├── configs/db-config.js
+├── middlewares/
+│   ├── error-handler.js        ← เขียนเอง (ดูสัปดาห์ Error Handling)
+│   └── pagination-middleware.js
+├── mappers/
+│   ├── api-response.js
+│   └── brand-mapper.js
+├── repositories/brand-repo.js
+├── services/brand-service.js
+└── routes/brand-route.js</div>
+  <div class="tool" style="padding:0;gap:0;overflow:hidden">
+    <div class="tabs" role="tablist" id="skTabs" style="padding:0 10px"></div>
+    <div class="code" style="border-radius:0"><div class="bar"><span id="skName"></span><button class="copy">คัดลอก</button></div><pre><code class="language-javascript" id="skCode"></code></pre></div>
+  </div>
+</section>
+
+<!-- ================= QUIZ ================= -->
+<section class="wk" id="quiz" data-title="แบบฝึกหัด" data-wk="QZ">
+  <div class="sec-head">
+    <div class="eyebrow">ซ้อมข้อสอบทฤษฎี <label class="mark"><input type="checkbox" data-done="quiz"> ทำแล้ว</label></div>
+    <h2>แบบฝึกหัด 5 ตัวเลือก</h2>
+    <p class="sum">รูปแบบเดียวกับข้อสอบจริง (ตอบถูกข้อเดียว) ครอบคลุมทุกบท ตัวเลือกสลับทุกครั้งที่เริ่มใหม่ ตอบแล้วจะเห็นเฉลยพร้อมเหตุผลทันที</p>
+  </div>
+  <div class="tool">
+    <div class="q" id="qBox"></div>
+    <div class="qfoot"><span class="score" id="qScore"></span><div class="row"><button class="btn" id="qRestart">เริ่มใหม่</button><button class="btn pri" id="qNext">ข้อถัดไป →</button></div></div>
+  </div>
+</section>
+
+<footer class="muted" style="font-size:13px;border-top:1px solid var(--line);padding-top:16px">สรุปจากสไลด์ INT161 สัปดาห์ 1–7 และบันทึกคาบเรียนกลุ่ม B ระหว่าง 6 ส.ค.–15 ต.ค. 2569 · รายละเอียดการสอบให้ยึดประกาศในช่อง General ของรายวิชาเป็นหลัก</footer>
+</main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const store={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+
+/* ---------- TOC + progress ---------- */
+const secs=$$('section.wk');
+const toc=$('#toc'), top=$('#topnav');
+const done=store.get('int161-done',{});
+secs.forEach((s,i)=>{
+  if(i===1){const li=document.createElement('li');li.className='sep';li.textContent='เนื้อหารายสัปดาห์';toc.appendChild(li)}
+  if(s.id==='exam'){const li=document.createElement('li');li.className='sep';li.textContent='เตรียมสอบ';toc.appendChild(li)}
+  const li=document.createElement('li');
+  li.innerHTML=`<a href="#${s.id}" data-id="${s.id}"><span class="wk">${s.dataset.wk}</span><span>${s.dataset.title}</span><span class="dot"></span></a>`;
+  toc.appendChild(li);
+  const a=document.createElement('a');a.href='#'+s.id;a.dataset.id=s.id;a.textContent=s.dataset.title;top.appendChild(a);
+});
+const marks=$$('[data-done]');
+function paintDone(){
+  let n=0;
+  marks.forEach(m=>{const on=!!done[m.dataset.done];m.checked=on;if(on)n++;
+    $$(`a[data-id="${m.dataset.done}"]`).forEach(a=>a.classList.toggle('done',on))});
+  $('#progTxt').textContent=`อ่านแล้ว ${n}/${marks.length}`;
+  $('#progBar').style.width=(n/marks.length*100)+'%';
+}
+marks.forEach(m=>m.addEventListener('change',()=>{done[m.dataset.done]=m.checked;store.set('int161-done',done);paintDone()}));
+paintDone();
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){
+  $$('.toc a, .topnav a').forEach(a=>a.classList.toggle('active',a.dataset.id===e.target.id));
+  const t=top.querySelector(`a[data-id="${e.target.id}"]`); if(t&&getComputedStyle(top).display!=='none') t.scrollIntoView({block:'nearest',inline:'center'});
+}})},{rootMargin:'-30% 0px -65% 0px'});
+secs.forEach(s=>io.observe(s));
+
+/* ---------- copy buttons ---------- */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('.copy'); if(!b) return;
+  const code=b.closest('.code').querySelector('pre');
+  const txt=code.innerText;
+  const okf=()=>{b.textContent='คัดลอกแล้ว';setTimeout(()=>b.textContent='คัดลอก',1400)};
+  const fall=()=>{const r=document.createRange();r.selectNodeContents(code);const s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='เลือกข้อความแล้ว กด Ctrl+C';setTimeout(()=>b.textContent='คัดลอก',2200)};
+  try{navigator.clipboard.writeText(txt).then(okf,fall)}catch(err){fall()}
+});
+
+/* ---------- request flow ---------- */
+const lanes=[
+ ['Client','ส่ง request'],['express.json()','middleware'],['queryParser()','middleware'],['Router / Controller','routes/'],
+ ['Service','services/'],['Repository','repositories/'],['MySQL','database'],['Mapper → DTO','mappers/'],['apiResponse()','res.json'],['errorHandler','(err,req,res,next)']
+];
+const okPath=[
+ {l:0,t:'Client ส่ง request',d:'Front-end หรือ test runner ยิง request มาพร้อม method, path, query string และ body (JSON)',c:'POST /api/66130500001/brands?page=1&limit=5\nContent-Type: application/json\n\n{ "name": "Pulsar", "country": "Korea" }'},
+ {l:1,t:'express.json() แปลง body',d:'built-in middleware อ่าน stream ของ body แล้ว JSON.parse ให้ ผลลัพธ์อยู่ใน req.body จากนั้นเรียก next()',c:'app.use(express.json())\n// req.body = { name: "Pulsar", country: "Korea" }'},
+ {l:2,t:'queryParser() คำนวณ pagination',d:'middleware ของเราเองอ่าน page/limit จาก req.query ตรวจค่า แล้วแนบ req.pagination ไว้ให้ชั้นถัดไป',c:'req.pagination = { page: 1, limit: 5, offset: 0 }'},
+ {l:3,t:'Router จับคู่ path + method',d:'Controller ดึงค่าจาก req.params / req.query / req.body ตรวจ input เบื้องต้น แล้วส่งต่อให้ service ไม่มี SQL หรือ business logic ในชั้นนี้',c:"router.post('/', async (req, res, next) => {\n  const brand = await service.create(req.body)\n  apiResponse(res, brand, null, 201)\n})"},
+ {l:4,t:'Service ทำ business logic',d:'ตรวจกฎทางธุรกิจ เช่น ชื่อห้ามว่าง ประสานหลาย repository ถ้าต้องใช้ แล้วแปลงผลด้วย mapper ไม่รู้จัก req/res',c:"if (!data.name) throw new AppError('name is required', 400)\nconst entity = await repo.create(data)\nreturn mapper.map(entity)"},
+ {l:5,t:'Repository คุยกับฐานข้อมูล',d:'ชั้นเดียวที่เขียน SQL ใช้ prepared statement (?) เสมอ',c:"const [result] = await pool.query(\n  'INSERT INTO brands SET ?', [data])\nreturn findById(result.insertId)"},
+ {l:6,t:'MySQL ประมวลผล',d:'DB ตอบกลับเป็น ResultSetHeader (insertId, affectedRows) หรือ array ของแถว',c:'{ affectedRows: 1, insertId: 21 }'},
+ {l:7,t:'Mapper แปลง Entity → DTO',d:'เลือกเฉพาะ field ที่ควรส่งออก เปลี่ยนชื่อ field ตามสัญญาของ API ตัดข้อมูลลับทิ้ง',c:'{ id: 21, name: "Pulsar", country: "Korea" }'},
+ {l:8,t:'ส่ง response กลับ',d:'apiResponse ห่อ data ด้วยรูปแบบมาตรฐาน พร้อม status ที่ถูกต้อง (POST สำเร็จ = 201)',c:'HTTP/1.1 201 Created\n{ "success": true, "data": { ... }, "timestamp": "2026-10-21T11:00:00.000Z" }'}
+];
+const errPath=[
+ {l:0,t:'Client ขอสิ่งที่ไม่มี',d:'ขอ brand id ที่ไม่มีในฐานข้อมูล',c:'GET /api/66130500001/brands/999'},
+ {l:3,t:'Router ส่งต่อ',d:'Controller เรียก service ตามปกติ โดยห่อด้วย try/catch (หรือพึ่ง Express 5 ที่ส่ง async error ต่อให้เอง)',c:"try { apiResponse(res, await service.getById(id)) }\ncatch (e) { next(e) }"},
+ {l:4,t:'Service ไม่ catch',d:'ปล่อยให้ error ไหลขึ้นไปตาม call stack (error propagation)',c:'return mapper.map(await repo.findById(id))'},
+ {l:5,t:'Repository โยน AppError',d:'query ได้ 0 แถว จึง throw error ที่ระบุ status ไว้ในตัว',c:"if (rows.length === 0)\n  throw new AppError(`Brand 999 not found`, 404)"},
+ {l:9,t:'next(err) กระโดดไป error middleware',d:'Express ข้าม middleware/route ปกติทั้งหมด ไปหาฟังก์ชันที่มี 4 parameter ที่วางไว้ท้ายสุด',c:'app.use(errorHandler)  // (err, req, res, next)'},
+ {l:8,t:'ตอบ error ที่อ่านเข้าใจ',d:'ส่ง status code ที่ถูกต้องและ JSON ที่ไม่มี stack trace หลุดออกไป',c:'HTTP/1.1 404 Not Found\n{ "error": "NOT_FOUND", "statusCode": 404,\n  "message": "Brand 999 not found",\n  "path": "/api/66130500001/brands/999" }'}
+];
+let mode='ok', step=0;
+const lanesEl=$('#lanes'), stage=$('#stage');
+function drawFlow(){
+  const path=mode==='ok'?okPath:errPath, s=path[step];
+  const used=new Set(path.map(p=>p.l));
+  lanesEl.innerHTML=lanes.map((l,i)=>`<li class="${i===9?'err ':''}${i===s.l?'on':''} ${used.has(i)?'':'dim'}">${esc(l[0])}<small>${esc(l[1])}</small></li>`).join('');
+  stage.innerHTML=`<div class="step-n">ขั้นที่ ${step+1} / ${path.length} · ${mode==='ok'?'เส้นทางปกติ':'เส้นทาง error'}</div><div class="step-t">${esc(s.t)}</div><p>${esc(s.d)}</p><div class="out">${esc(s.c)}</div>`;
+  $('#flowMode').textContent=mode==='ok'?'สลับเป็นเส้นทาง error':'สลับเป็นเส้นทางปกติ';
+}
+$('#flowNext').onclick=()=>{const p=mode==='ok'?okPath:errPath;step=(step+1)%p.length;drawFlow()};
+$('#flowPrev').onclick=()=>{const p=mode==='ok'?okPath:errPath;step=(step-1+p.length)%p.length;drawFlow()};
+$('#flowMode').onclick=()=>{mode=mode==='ok'?'err':'ok';step=0;drawFlow()};
+drawFlow();
+
+/* ---------- URL playground ---------- */
+function drawUrl(){
+  const v=$('#urlIn').value.trim();
+  try{
+    const u=new URL(v);
+    const seg=u.pathname.split('/');
+    const keys=[...new Set([...u.searchParams.keys()])];
+    let o=`pathname            → ${u.pathname}\n`;
+    o+=`split('/')          → ${JSON.stringify(seg)}\n`;
+    o+=`.filter(Boolean)    → ${JSON.stringify(seg.filter(Boolean))}\n\n`;
+    keys.forEach(k=>{const all=u.searchParams.getAll(k);
+      o+= all.length>1?`searchParams.getAll('${k}') → ${JSON.stringify(all)}\n`:`searchParams.get('${k}') → ${JSON.stringify(all[0])}\n`});
+    const m=u.pathname.match(/^\/api\/([^/]+)\/([^/]+)\/?$/);
+    if(m){o+=`\n// ใน Express: app.get('/api/${m[1]}/:id')\nreq.params → ${JSON.stringify({id:m[2]})}\n`}
+    if(keys.length){const q={};keys.forEach(k=>{const a=u.searchParams.getAll(k);q[k]=a.length>1?a:a[0]});o+=`req.query  → ${JSON.stringify(q)}`}
+    $('#urlOut').textContent=o;
+  }catch(e){$('#urlOut').textContent='URL ไม่ถูกต้อง ต้องขึ้นต้นด้วย http:// หรือ https://'}
+}
+$('#urlIn').addEventListener('input',drawUrl);drawUrl();
+
+/* ---------- SQLi ---------- */
+function drawSqli(){
+  const v=$('#sqliIn').value;
+  $('#sqliBad').textContent=`'SELECT * FROM subjects WHERE id = ' + id\n\n→ SELECT * FROM subjects WHERE id = ${v}`;
+  const escaped="'"+v.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+"'";
+  const isNum=/^\d+$/.test(v.trim());
+  $('#sqliGood').textContent=`pool.query('SELECT * FROM subjects WHERE id = ?', [id])\n\n→ SELECT * FROM subjects WHERE id = ${isNum?v.trim():escaped}`;
+  let note='';
+  if(/\bor\b\s*\S+\s*=\s*\S+/i.test(v)) note='เงื่อนไข OR 1=1 เป็นจริงทุกแถว → ได้ข้อมูลทั้งตาราง';
+  else if(/;\s*(drop|delete|update)/i.test(v)) note='ถ้า driver อนุญาตหลายคำสั่ง ตารางอาจถูกลบ/แก้ทิ้ง';
+  else if(/--|#/.test(v)) note='ส่วนที่เหลือของคำสั่งถูก comment ทิ้ง';
+  else note='ค่าปกติไม่เป็นปัญหา แต่ถ้าผู้ใช้ส่งค่าแปลก ๆ มาก็หลุดได้ทันที';
+  $('#sqliBadNote').textContent=note;
+}
+$('#sqliIn').addEventListener('input',drawSqli);drawSqli();
+
+/* ---------- Pagination calc ---------- */
+function drawPg(){
+  const rp=$('#pgPage').value, rl=$('#pgLimit').value, total=Math.max(parseInt($('#pgTotal').value)||0,0);
+  const page=Math.max(parseInt(rp)||1,1), limit=Math.min(Math.max(parseInt(rl)||20,1),100);
+  const offset=(page-1)*limit, pages=Math.ceil(total/limit);
+  const from=offset+1, to=Math.min(offset+limit,total);
+  let o=`page  = Math.max(parseInt(${JSON.stringify(rp)}), 1)   → ${page}\n`;
+  o+=`limit = Math.min(parseInt(${JSON.stringify(rl)}), 100) → ${limit}\n`;
+  o+=`offset = (${page} - 1) × ${limit} = ${offset}\n\n`;
+  o+=`SELECT * FROM products LIMIT ${limit} OFFSET ${offset}\n`;
+  o+= from<=total?`→ ได้แถวที่ ${from}–${to} (${to-from+1} แถว)\n\n`:`→ ไม่มีแถว (เกินหน้าสุดท้าย) data = []\n\n`;
+  o+=JSON.stringify({pagination:{total,page,limit,totalPages:pages,hasNextPage:page*limit<total,hasPrevPage:page>1}},null,2);
+  $('#pgOut').textContent=o;
+}
+['#pgPage','#pgLimit','#pgTotal'].forEach(s=>$(s).addEventListener('input',drawPg));drawPg();
+
+/* ---------- Status trainer ---------- */
+const scen=[
+ ['POST สร้างวิชาใหม่สำเร็จ',201,'Created: สร้าง resource ใหม่'],
+ ['GET /api/subjects/999 แต่ไม่มี id นี้',404,'Not Found: ไม่มี resource'],
+ ['POST สร้างวิชา แต่ subject_code ซ้ำกับที่มีอยู่ (UNIQUE)',409,'Conflict: ขัดกับสถานะปัจจุบันของข้อมูล'],
+ ['POST แต่ body ว่าง หรือขาด field credit',400,'Bad Request: client ส่งข้อมูลไม่ถูกต้อง'],
+ ['ส่ง token หมดอายุ ยืนยันตัวตนไม่ผ่าน',401,'Unauthorized: authenticate ไม่ผ่าน'],
+ ['login แล้วในฐานะนักศึกษา แต่เรียก API ของ admin',403,'Forbidden: รู้ว่าเป็นใครแล้ว แต่ไม่มีสิทธิ์'],
+ ['GET /api/subjects ดึงรายการสำเร็จ',200,'OK: สำเร็จทั่วไป'],
+ ['โค้ดเรียก property ของ undefined จน TypeError',500,'Internal Server Error: error ฝั่ง server ที่ไม่ได้คาดไว้'],
+ ['ฐานข้อมูลปิดปรับปรุงชั่วคราว ให้บริการไม่ได้',503,'Service Unavailable: บริการใช้ไม่ได้ชั่วคราว'],
+ ['PUT /api/subjects/5 แก้ไขสำเร็จ',200,'OK: อัปเดตสำเร็จ'],
+ ['เงื่อนไขใน request header (เช่น If-Match) เป็นเท็จ',412,'Precondition Failed']
+];
+const codes=[200,201,400,401,403,404,409,412,500,503];
+let si=0, sRight=0, sTotal=0, answered=false, order=[...scen.keys()].sort(()=>Math.random()-.5);
+function drawSc(){
+  const s=scen[order[si]]; answered=false;
+  $('#scQ').textContent=s[0]; $('#scA').textContent='';
+  $('#scBtns').innerHTML=codes.map(c=>`<button data-c="${c}">${c}</button>`).join('');
+}
+$('#scBtns').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b||answered) return; answered=true;
+  const s=scen[order[si]], c=+b.dataset.c; sTotal++;
+  if(c===s[1]){sRight++;b.classList.add('right')} else {b.classList.add('wrong');$(`#scBtns [data-c="${s[1]}"]`).classList.add('right')}
+  $('#scA').textContent=`${s[1]} ${s[2]}`; $('#scScore').textContent=`${sRight} / ${sTotal}`;
+});
+$('#scNext').onclick=()=>{si=(si+1)%order.length;drawSc()};
+drawSc();
+
+/* ---------- Exam skeleton ---------- */
+const SK={
+'app.js':`import express from 'express'
+import { queryParser } from './middlewares/pagination-middleware.js'
+import { notFound, errorHandler } from './middlewares/error-handler.js'
+import brandRouter from './routes/brand-route.js'
+
+const STUDENT_ID = '66130500001'          // ← รหัสของตัวเอง
+const PORT = 3000
+const app = express()
+
+app.use(express.json())                   // 1) parse body
+app.use(queryParser())                    // 2) pagination (ก่อน router)
+
+const BASE = \`/api/\${STUDENT_ID}\`
+app.get(\`\${BASE}/student-info\`, (req, res) => {
+  res.json({ success: true, data: { studentId: STUDENT_ID }, timestamp: new Date().toISOString() })
+})
+app.use(\`\${BASE}/brands\`, brandRouter)   // 3) routers
+
+app.use(notFound)                         // 4) ไม่มี route ตรง
+app.use(errorHandler)                     // 5) error handler ท้ายสุด
+
+app.listen(PORT, () => console.log(\`Running at http://localhost:\${PORT}\${BASE}\`))`,
+'configs/db-config.js':`import * as mysql from 'mysql2/promise'
+
+const pool = mysql.createPool({
+  host: 'localhost',
+  user: 'root',
+  password: 'mysql@sit',
+  database: 'mobile_distributor',      // ← ตามไฟล์ SQL ของ spec
+})
+
+export default pool`,
+'middlewares/error-handler.js':`export class AppError extends Error {
+  static errors = { 400: 'BAD_REQUEST', 401: 'UNAUTHORIZED', 403: 'FORBIDDEN',
+                    404: 'NOT_FOUND', 409: 'CONFLICT', 500: 'INTERNAL_SERVER_ERROR' }
+  constructor(message, statusCode = 500) {
+    super(message)
+    this.statusCode = statusCode
+    this.error = AppError.errors[statusCode]
+    this.isOperational = true
+    Error.captureStackTrace(this, this.constructor)
+  }
+}
+
+export function notFound(req, res, next) {
+  next(new AppError(\`Route \${req.method} \${req.originalUrl} not found\`, 404))
+}
+
+export function errorHandler(err, req, res, next) {
+  // แปลง error จาก MySQL ให้เป็น status ที่เหมาะสม
+  if (err.code === 'ER_DUP_ENTRY') { err.statusCode = 409; err.error = 'CONFLICT' }
+  if (err.type === 'entity.parse.failed') { err.statusCode = 400; err.message = 'Invalid JSON body' }
+  const status = err.statusCode || err.status || 500
+  res.status(status).json({
+    success: false,
+    error: err.error || AppError.errors[status] || 'ERROR',
+    statusCode: status,
+    message: err.message,
+    path: req.originalUrl,
+    timestamp: new Date().toISOString(),
+  })
+}`,
+'middlewares/pagination-middleware.js':`export const queryParser = () => (req, res, next) => {
+  const query = req.query || {}
+  if (query.page === undefined || query.limit === undefined) {
+    req.pagination = null
+    return next()
+  }
+  const page = Math.max(parseInt(query.page) || 1, 1)
+  const limit = Math.min(parseInt(query.limit) || 20, 100)
+  const offset = (page - 1) * limit
+  req.pagination = { page, limit, offset }
+  next()
+}`,
+'repositories/brand-repo.js':`import db from '../configs/db-config.js'
+import { AppError } from '../middlewares/error-handler.js'
+
+const TABLE = 'brands'
+const ENTITY = 'Brand'
+
+export async function count() {
+  const [[{ total }]] = await db.query(\`SELECT COUNT(*) AS total FROM \${TABLE}\`)
+  return total
+}
+
+export async function findAll(pagination) {
+  if (!pagination) {
+    const [rows] = await db.query(\`SELECT * FROM \${TABLE}\`)
+    return rows
+  }
+  const [rows] = await db.query(\`SELECT * FROM \${TABLE} LIMIT ? OFFSET ?\`,
+    [pagination.limit, pagination.offset])
+  rows.totalItems = await count()
+  return rows
+}
+
+export async function findById(id) {
+  const [rows] = await db.query(\`SELECT * FROM \${TABLE} WHERE id = ?\`, [id])
+  if (rows.length === 0) throw new AppError(\`\${ENTITY} with id '\${id}' was not found\`, 404)
+  return rows[0]
+}
+
+export async function create(data) {
+  const [result] = await db.query(\`INSERT INTO \${TABLE} SET ?\`, [data])
+  return findById(result.insertId)
+}
+
+export async function update(id, data) {
+  await findById(id)                                  // ไม่มี → 404
+  await db.query(\`UPDATE \${TABLE} SET ? WHERE id = ?\`, [data, id])
+  return findById(id)
+}
+
+export async function remove(id) {
+  const existing = await findById(id)                 // ไม่มี → 404
+  await db.query(\`DELETE FROM \${TABLE} WHERE id = ?\`, [id])
+  return existing
+}`,
+'mappers/brand-mapper.js':`export default class BrandMapper {
+  static toSummaryDTO(e) {
+    return { id: e.id, name: e.name, countryOfOrigin: e.country }
+  }
+  static toDetailDTO(e) {
+    const { country, created_at, ...rest } = e      // ตัด/เปลี่ยนชื่อ field ตาม spec
+    return { ...rest, countryOfOrigin: country }
+  }
+  static map(e, view = 'full') {
+    return view === 'summary' ? this.toSummaryDTO(e) : this.toDetailDTO(e)
+  }
+  static maps(list, view = 'summary') {
+    const out = list.map(e => this.map(e, view))
+    if (list.totalItems !== undefined) out.totalItems = list.totalItems
+    return out
+  }
+}`,
+'mappers/api-response.js':`export function apiResponse(res, data, pagination = null, status = 200) {
+  if (!pagination) {
+    return res.status(status).json({ success: true, data, timestamp: new Date().toISOString() })
+  }
+  const { page, limit } = pagination
+  const total = data.totalItems
+  return res.status(status).json({
+    success: true,
+    data,
+    pagination: {
+      total, page, limit,
+      totalPages: Math.ceil(total / limit),
+      hasNextPage: page * limit < total,
+      hasPrevPage: page > 1,
+    },
+    timestamp: new Date().toISOString(),
+  })
+}`,
+'services/brand-service.js':`import * as repo from '../repositories/brand-repo.js'
+import mapper from '../mappers/brand-mapper.js'
+import { AppError } from '../middlewares/error-handler.js'
+
+export async function getAll(pagination = null, view = 'summary') {
+  return mapper.maps(await repo.findAll(pagination), view)
+}
+
+export async function getById(id, view = 'full') {
+  return mapper.map(await repo.findById(id), view)
+}
+
+function validate(body) {
+  if (!body || Object.keys(body).length === 0) throw new AppError('Request body is empty', 400)
+  if (!body.name) throw new AppError('name is required', 400)
+}
+
+export async function create(body) {
+  validate(body)
+  const { name, country, website } = body               // รับเฉพาะ field ที่อนุญาต
+  return mapper.map(await repo.create({ name, country, website }))
+}
+
+export async function update(id, body) {
+  validate(body)
+  const { name, country, website } = body
+  return mapper.map(await repo.update(id, { name, country, website }))
+}
+
+export async function remove(id) {
+  return mapper.map(await repo.remove(id))
+}`,
+'routes/brand-route.js':`import express from 'express'
+import * as service from '../services/brand-service.js'
+import { apiResponse } from '../mappers/api-response.js'
+
+const router = express.Router()
+
+// try/catch + next(e) ใช้ได้ทั้ง Express 4 และ 5
+router.get('/', async (req, res, next) => {
+  try {
+    const view = req.query.view || 'summary'
+    const data = await service.getAll(req.pagination, view)
+    apiResponse(res, data, req.pagination)
+  } catch (e) { next(e) }
+})
+
+router.get('/:id', async (req, res, next) => {
+  try {
+    apiResponse(res, await service.getById(req.params.id, req.query.view || 'full'))
+  } catch (e) { next(e) }
+})
+
+router.post('/', async (req, res, next) => {
+  try {
+    apiResponse(res, await service.create(req.body), null, 201)
+  } catch (e) { next(e) }
+})
+
+router.put('/:id', async (req, res, next) => {
+  try {
+    apiResponse(res, await service.update(req.params.id, req.body))
+  } catch (e) { next(e) }
+})
+
+router.delete('/:id', async (req, res, next) => {
+  try {
+    apiResponse(res, await service.remove(req.params.id))
+  } catch (e) { next(e) }
+})
+
+export default router`
+};
+const skTabs=$('#skTabs'), skCode=$('#skCode'), skName=$('#skName');
+function showSk(name){
+  $$('#skTabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.f===name));
+  skName.textContent='src/'+name;
+  skCode.textContent=SK[name]; skCode.removeAttribute('data-highlighted'); skCode.className='language-javascript';
+  if(window.hljs) hljs.highlightElement(skCode);
+}
+Object.keys(SK).forEach((k,i)=>{const b=document.createElement('button');b.role='tab';b.dataset.f=k;b.textContent=k.split('/').pop();b.onclick=()=>showSk(k);skTabs.appendChild(b)});
+
+/* ---------- Quiz ---------- */
+const Q=[
+ ['REST ย่อมาจากอะไร',['Representational State Transfer','Remote Execution State Transfer','Resource Endpoint Service Transport','Request–Response State Transaction','Representational Server Technology'],0,'REST = REpresentational State Transfer คิดโดย Roy Fielding'],
+ ['ข้อใดอธิบายหลัก Stateless ของ REST ได้ถูกต้อง',['แต่ละ request ต้องมีข้อมูลครบในตัวเอง server ไม่เก็บ session state ของ client','server ต้องจำผู้ใช้จาก request ก่อนหน้า','client ห้ามเก็บข้อมูลใด ๆ','response ทุกอันต้อง cache ได้','ต้องใช้ HTTP method แค่ GET'],0,'Stateless: client ต้องเก็บ session state เอง และส่งข้อมูลที่จำเป็นมาในทุก request'],
+ ['หลักการข้อใดของ REST เป็น "optional"',['Code on Demand','Stateless','Uniform Interface','Layered System','Client–Server'],0,'Code on Demand (server ส่ง script ให้ client รัน) เป็นข้อเดียวที่ไม่บังคับ'],
+ ['ข้อใด "ไม่ใช่" หนึ่งใน 4 เสาหลักของ Uniform Interface',['Stateless session','Resource Identification','Manipulation via Representations','Self-Descriptive Messages','HATEOAS'],0,'Stateless เป็น constraint แยกต่างหาก ไม่ใช่เสาหลักของ Uniform Interface'],
+ ['URI ใดออกแบบถูกหลัก REST ที่สุด สำหรับดึง orders ของสินค้า id 1',['GET /api/products/1/orders','GET /api/getOrdersByProduct?id=1','POST /api/products/orders/get','GET /api/product/1/order','GET /api/orders/listForProduct/1'],0,'ใช้คำนามพหูพจน์ ไม่มีกริยาใน URI และเป็น sub-collection ของ products/{id}'],
+ ['ข้อใดถูกต้องเกี่ยวกับ Node.js',['เป็น runtime สำหรับรัน JavaScript ฝั่ง server','เป็นภาษาโปรแกรมใหม่','เป็น framework บน Express','เป็น compiler แปล JS เป็น .exe','รันได้เฉพาะบน Linux'],0,'Node.js ไม่ใช่ภาษา เป็น runtime environment ที่รันได้หลาย OS'],
+ ['ภาษาใดใช้ตัวแปลแบบ Hybrid (compile เป็น byte code แล้วรันบน VM)',['Java','C','C++','Go','Assembly'],0,'Java, Kotlin, C# compile เป็น byte code แล้วให้ VM (interpreter + JIT) รัน'],
+ ['ข้อดีของ Interpreter เมื่อเทียบกับ Compiler คือข้อใด',['รันข้ามแพลตฟอร์มได้ดี ใครมี interpreter ก็รันได้','รันเร็วกว่า','ซ่อน source code ได้','ตรวจ error ทั้งโปรแกรมก่อนรัน','ไม่ต้องมีโปรแกรมแปลในเครื่อง'],0,'Interpreter portable สูงและ debug ไว แต่ช้ากว่าและต้องแจก source code'],
+ ['ใน ES Modules ใช้อะไรแทน __dirname และ __filename',['import.meta.url','module.exports','require.resolve','process.cwd()','global.__path'],0,'ESM ไม่มี __dirname/__filename ให้ใช้ import.meta.url'],
+ ['ข้อใดถูกต้องเกี่ยวกับ ESM เมื่อเทียบกับ CommonJS',['รองรับ tree-shaking ให้ bundler ตัดโค้ดที่ไม่ใช้ออก','ใช้ require() ในการ import','โหลดแบบ synchronous เท่านั้น','ใช้ได้เฉพาะใน Node.js','ต้องใช้ module.exports'],0,'ESM ใช้ import/export, parse แบบ static, ใช้ได้ทั้งเบราว์เซอร์และ Node และรองรับ tree-shaking'],
+ ["ผลของ '/users/123'.split('/').filter(Boolean) คือข้อใด",["['users', '123']","['', 'users', '123']","['/users', '/123']","['users/123']","[true, true]"],0,"split ได้ ['', 'users', '123'] แล้ว filter(Boolean) ตัดสตริงว่างทิ้ง"],
+ ["URL ?fav_subj=A&fav_subj=B ต้องใช้คำสั่งใดจึงได้ทั้งสองค่า",["searchParams.getAll('fav_subj')","searchParams.get('fav_subj')","searchParams.has('fav_subj')","request.params.fav_subj","url.pathname"],0,'get() ได้ค่าแรกค่าเดียว getAll() ได้ array ทุกค่า'],
+ ['ใน http.ServerResponse เมธอดใดบอกว่าส่ง header และ body ครบแล้ว',['response.end()','response.write()','response.writeHead()','response.setHeader()','response.listen()'],0,'end() ปิด response; write() ส่งทีละ chunk; writeHead() ส่ง status + header'],
+ ['request GET /api/subjects/5?page=2 กับ route /api/subjects/:id ข้อใดถูก',["req.params.id = '5' และ req.query.page = '2'","req.params.id = 5 (number)","req.query.id = '5'","req.body.page = '2'","req.params.page = '2'"],0,'path variable อยู่ใน req.params, query string อยู่ใน req.query และเป็น string เสมอ'],
+ ['ข้อใดถูกต้องเกี่ยวกับ res.status(201)',['ตั้ง status code อย่างเดียว ยังไม่ส่ง ต้องต่อด้วย .json() หรือ .send()','ส่ง response ทันที','ส่ง body เป็น 201','ใช้ได้กับ GET เท่านั้น','ทำให้ Express ข้ามไป error handler'],0,'res.status() คืน res กลับมาให้ chain ต่อ เช่น res.status(201).json(obj)'],
+ ['express.json() คืออะไร',['built-in middleware ที่ parse JSON body ไปไว้ใน req.body','ฟังก์ชันส่ง response เป็น JSON','router สำหรับ path /json','error-handling middleware','third-party library ต้องติดตั้งเพิ่ม'],0,'เป็น built-in middleware ของ Express'],
+ ['ใน middleware ถ้าไม่เรียก next() และไม่ส่ง response จะเกิดอะไร',['request ค้าง client รอจน timeout','Express ส่ง 200 ให้อัตโนมัติ','ไปที่ middleware ถัดไปเอง','server crash ทันที','ไปที่ error handler'],0,'ต้องเลือกอย่างใดอย่างหนึ่ง: เรียก next() ส่งต่อ หรือส่ง response จบ'],
+ ['ชั้นใดไม่ควรมี business logic และ SQL',['Controller','Service','Repository','Service และ Repository','ทุกชั้นมีได้'],0,'Controller รับ/ส่ง HTTP แล้ว delegate ให้ service เท่านั้น'],
+ ['ชั้นใดเปรียบเหมือน "หมอ" ที่วินิจฉัยและตัดสินใจ',['Service','Controller','Repository','Middleware','Database'],0,'Controller = แผนกต้อนรับ, Service = หมอ, Repository = ห้องเวชระเบียน'],
+ ['วิธีใดป้องกัน SQL Injection ได้ถูกต้อง',["pool.query('SELECT * FROM t WHERE id = ?', [id])","pool.query('SELECT * FROM t WHERE id = ' + id)","pool.query(`SELECT * FROM t WHERE id = ${id}`)","ตรวจว่า id ไม่มีช่องว่างแล้วต่อสตริง","ใช้ GET แทน POST"],0,'prepared statement (?) ทำให้ค่าเป็นข้อมูล ไม่ถูกตีความเป็นคำสั่ง SQL'],
+ ['await pool.query(...) ของ mysql2/promise คืนค่าอะไร',['array [rows, fields]','object { rows }','จำนวนแถว','string JSON','Promise ที่ต้อง await อีกรอบ'],0,'จึงนิยมเขียน const [rows] = await pool.query(...)'],
+ ['หลัง DELETE ควรตรวจค่าใดเพื่อรู้ว่าลบสำเร็จ',['result.affectedRows > 0','result.insertId','rows.length','result.changedId','fields.length'],0,'affectedRows บอกจำนวนแถวที่ได้รับผลกระทบ; insertId ใช้หลัง INSERT'],
+ ['ถ้า exception ถูก throw แล้วไม่มีใคร catch ใน Node.js จะเกิดอะไร',['process จบการทำงาน (process.exit(1)) server ล่ม','Node ข้ามไปทำบรรทัดถัดไป','ได้ status 500 อัตโนมัติ','error ถูกเก็บลง log แล้วทำงานต่อ','Event loop รีสตาร์ตเอง'],0,'นี่คือเหตุผลที่ต้องมี error handling'],
+ ['error-handling middleware ของ Express มี signature แบบใด',['(err, req, res, next)','(req, res, next)','(req, res)','(err, res)','(next, err, req, res)'],0,'Express รู้ว่าเป็น error handler จากการมี 4 parameter'],
+ ['ควรวาง error-handling middleware ไว้ที่ใดใน app.js',['ท้ายสุด หลัง route และ middleware อื่นทั้งหมด','บนสุดก่อน express.json()','ก่อน router','ใน repository','ที่ใดก็ได้'],0,'ต้องอยู่ท้ายสุด จึงรับ error จากทุก route ได้'],
+ ['เมื่อเรียก next(err) Express จะทำอย่างไร',['ข้าม middleware/route ปกติทั้งหมด ไปหา error-handling middleware','ไป middleware ถัดไปตามปกติ','ส่ง 200 กลับทันที','รีสตาร์ต server','throw error ซ้ำ'],0,'next(err) คือสัญญาณให้กระโดดไป error handler'],
+ ['ข้อใดเป็น Operational Error',['ฐานข้อมูลเชื่อมต่อไม่ได้','TypeError จากการเรียก undefined.name','ลืม return ค่าในฟังก์ชัน','ตั้งชื่อตัวแปรผิด','loop ไม่มีวันจบ'],0,'operational = ปัญหาจากสภาพแวดล้อม (network, DB, file) ไม่ใช่บั๊กในโค้ด'],
+ ['สร้างข้อมูลใหม่แต่ข้อมูลซ้ำกับคอลัมน์ UNIQUE ที่มีอยู่ ควรตอบ status ใด',['409 Conflict','400 Bad Request','404 Not Found','403 Forbidden','500 Internal Server Error'],0,'409 = request ขัดกับสถานะปัจจุบันของ resource'],
+ ['ผู้ใช้ login แล้ว แต่ไม่มีสิทธิ์เข้าถึง resource ควรตอบ status ใด',['403 Forbidden','401 Unauthorized','400 Bad Request','404 Not Found','409 Conflict'],0,'401 = ยืนยันตัวตนไม่ผ่าน, 403 = ผ่านแล้วแต่ไม่มีสิทธิ์'],
+ ['page = 4, limit = 15 ค่า OFFSET คือเท่าใด',['45','60','15','4','56'],0,'(4 − 1) × 15 = 45'],
+ ['totalItems = 138, limit = 20 จะมีทั้งหมดกี่หน้า',['7','6','6.9','8','138'],0,'Math.ceil(138 / 20) = Math.ceil(6.9) = 7'],
+ ['Math.min(parseInt(limit), 100) ใน pagination middleware มีไว้ทำอะไร',['จำกัดไม่ให้ขอเกิน 100 แถวต่อหน้า','ทำให้ page ไม่ติดลบ','คำนวณ offset','นับจำนวนแถวทั้งหมด','แปลง limit เป็น string'],0,'Math.max(page, 1) กันหน้าติดลบ, Math.min(limit, 100) กันขอเยอะเกิน'],
+ ['สูตรใดใช้หา hasNextPage ได้ถูกต้อง',['page * limit < total','page < limit','offset > total','page > 1','total % limit === 0'],0,'ถ้าจำนวนที่แสดงไปแล้ว (page × limit) ยังน้อยกว่าทั้งหมด แปลว่ายังมีหน้าถัดไป'],
+ ['จุดประสงค์หลักของ DTO คือข้อใด',['ควบคุมหน้าตาข้อมูลที่ส่งออก ไม่ให้ field ลับอย่าง password_hash หลุดไป','เพิ่มความเร็วการ query','สร้างตารางในฐานข้อมูล','แทนที่ repository','เข้ารหัสรหัสผ่าน'],0,'DTO แยกสัญญาของ API ออกจาก entity ในฐานข้อมูล'],
+ ['ข้อใดกล่าวถูกต้องเกี่ยวกับ Entity และ DTO',['Entity แทนข้อมูลที่เก็บใน DB ส่วน DTO แทนข้อมูลที่ API รับ/ส่ง','Entity กับ DTO ต้องมี field เหมือนกันเสมอ','DTO เก็บอยู่ในฐานข้อมูล','entity หนึ่งมี DTO ได้แบบเดียว','DTO ใช้เฉพาะ request ไม่ใช้กับ response'],0,'entity เดียว map เป็น DTO ได้หลายแบบ เช่น summary กับ detail'],
+ ['ใน MPA (Multi-Page Application) เมื่อผู้ใช้เปลี่ยนหน้าจะเกิดอะไร',['โหลดหน้าใหม่จาก server ทั้งหน้า (full page refresh)','ขอ JSON แล้วอัปเดตบางส่วน','ไม่ติดต่อ server เลย','ใช้ WebSocket เสมอ','โหลดเฉพาะ CSS'],0,'SPA ต่างหากที่โหลดครั้งเดียวแล้วขอ JSON ผ่าน AJAX'],
+ ['SOAP Web Service ใช้อะไรอธิบายรูปแบบ request/response',['WSDL ซึ่งเป็น XML','JSON Schema','OpenAPI YAML','HTML form','GraphQL schema'],0,'SOAP ใช้ XML และอธิบายด้วย Web Service Definition Language (WSDL)'],
+ ['Layered System มีประโยชน์ข้อใด "น้อยที่สุด"',['ทำให้ server จำ session ของผู้ใช้ได้','Separation of Concerns','เพิ่ม cache / load balancer ได้โดย client ไม่ต้องแก้','เพิ่มความปลอดภัย','แต่ละชั้นแก้ไขได้อิสระ'],0,'การจำ session ขัดกับ Stateless และไม่ใช่ประโยชน์ของ Layered System']
+];
+let qOrder=[], qi=0, qRight=0, qDone=0;
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function startQuiz(){qOrder=shuffle([...Q.keys()]);qi=0;qRight=0;qDone=0;drawQ()}
+function drawQ(){
+  const box=$('#qBox');
+  if(qi>=qOrder.length){
+    const pct=Math.round(qRight/Q.length*100);
+    box.innerHTML=`<div class="qn">สรุปผล</div><div class="qt">ได้ ${qRight} จาก ${Q.length} ข้อ (${pct}%)</div><p class="muted">${pct>=80?'พร้อมสอบทฤษฎีแล้ว ทบทวนเฉพาะข้อที่ผิดอีกรอบ':pct>=60?'ใกล้แล้ว กลับไปอ่านบทที่ตอบผิดบ่อยแล้วลองใหม่':'กลับไปอ่านแต่ละบทแล้วลองทำใหม่ ตัวเลือกจะสลับให้ทุกครั้ง'}</p>`;
+    $('#qNext').hidden=true; $('#qScore').textContent=`${qRight} / ${qDone}`; return;
+  }
+  $('#qNext').hidden=false;
+  const q=Q[qOrder[qi]];
+  const opts=shuffle(q[1].map((t,i)=>({t,ok:i===q[2]})));
+  box.innerHTML=`<div class="qn">ข้อ ${qi+1} / ${Q.length}</div><div class="qt">${esc(q[0])}</div><div class="opts">${opts.map((o,i)=>`<button data-ok="${o.ok}"><b>${'กขคงจ'[i]}</b><span>${esc(o.t)}</span></button>`).join('')}</div><div class="expl" hidden></div>`;
+  $('#qScore').textContent=`${qRight} / ${qDone}`;
+  box.querySelector('.opts').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    const all=[...box.querySelectorAll('.opts button')]; all.forEach(x=>x.disabled=true);
+    const ok=b.dataset.ok==='true'; qDone++; if(ok) qRight++;
+    b.classList.add(ok?'right':'wrong'); all.find(x=>x.dataset.ok==='true').classList.add('right');
+    const ex=box.querySelector('.expl'); ex.hidden=false; ex.innerHTML=`<b>${ok?'ถูกต้อง':'ยังไม่ถูก'}</b> · ${esc(q[3])}`;
+    $('#qScore').textContent=`${qRight} / ${qDone}`;
+  },{once:true});
+}
+$('#qNext').onclick=()=>{qi++;drawQ()};
+$('#qRestart').onclick=startQuiz;
+startQuiz();
+
+/* ---------- highlight ---------- */
+function hl(){ if(!window.hljs) return; $$('pre code').forEach(c=>{ if(c.id!=='skCode') hljs.highlightElement(c)}); }
+hl(); showSk('app.js');
+
+/* ---------- open hash ---------- */
+if(location.hash){const t=document.getElementById(location.hash.slice(1)); if(t) setTimeout(()=>t.scrollIntoView(),50)}
+})();
+</script>
+
+</body>
+</html>

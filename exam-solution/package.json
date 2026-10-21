@@ -1,0 +1,17 @@
+{
+  "name": "express-template",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/app.js",
+    "test": "node tests/test-runner.mjs"
+  },
+  "private": true,
+  "dependencies": {
+    "express": "^5.2.1",
+    "http-status": "^2.1.0",
+    "mysql2": "^3.24.3"
+  }
+}
